@@ -20,14 +20,15 @@ h1 {
     color: #4CAF50;
 }
 
-.tabs {
+.tab-nav {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: center;
     margin-bottom: 20px;
 }
 
 .tab-button {
     padding: 10px 20px;
+    margin: 0 5px;
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -43,37 +44,35 @@ h1 {
     display: none;
 }
 
-.tab.active {
-    display: block;
-}
-
-.form-section {
-    margin-bottom: 20px;
-}
-
-input[type="file"] {
-    margin-bottom: 10px;
-}
-
-table {
+#score-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-table, th, td {
+#score-table th, #score-table td {
     border: 1px solid #ddd;
-}
-
-th, td {
-    padding: 10px;
+    padding: 8px;
     text-align: center;
 }
 
-th {
+#score-table th {
     background-color: #4CAF50;
     color: white;
 }
 
-td {
-    background-color: #f9f9f9;
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+input[type="file"] {
+    margin-top: 10px;
 }
