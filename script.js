@@ -91,5 +91,35 @@ if (format === 'xlsx') { XLSX.writeFile(wb, 'scores.xlsx'); } else if (format ==
 
 function resetScores() { document.getElementById('score-body').innerHTML = ''; alert('Scores reset.'); }
 
-window.onload = () => { loadSheetJS(); initObjectiveForm('answer'); initObjectiveForm('marking'); initEssayForm('answer'); initEssayForm('marking'); };
+window.onload = () => { loadSheetJS(); initObjectiveForm('answer'); initObjectiveForm('marking'); initEssayForm('answer'); initEssayForm('marking'); 
+                      
+                      document.addEventListener('DOMContentLoaded', () => {
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabs = document.querySelectorAll('.tab');
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Hide all tabs
+      tabs.forEach(tab => tab.style.display = 'none');
+
+      // Remove active class from all buttons
+      tabButtons.forEach(b => b.classList.remove('active'));
+
+      // Show the selected tab
+      const tabId = btn.getAttribute('data-tab');
+      document.getElementById(tabId).style.display = 'block';
+
+      // Highlight active tab
+      btn.classList.add('active');
+    });
+  });
+
+  // Optionally activate the first tab by default
+  if (tabButtons.length > 0) {
+    tabButtons[0].click();
+  }
+});
+                      };
+
+                            
 
