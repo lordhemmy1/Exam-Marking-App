@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examination Marking App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Examination Marking App</h1>
+
+        <!-- Answer Tab -->
+        <div class="tab" id="answer-tab">
+            <h2>Answer Tab</h2>
+            <form id="answer-form">
+                <label for="obj-answers">Objective Answers:</label><br>
+                <input type="text" id="obj-answers" placeholder="Enter objective answers"><br>
+
+                <label for="essay-answers">Essay Answers:</label><br>
+                <textarea id="essay-answers" placeholder="Enter essay answers"></textarea><br>
+
+                <button type="button" onclick="saveAnswers()">Save Answers</button>
+            </form>
+        </div>
+
+        <!-- Marking Tab -->
+        <div class="tab" id="marking-tab">
+            <h2>Marking Tab</h2>
+            <form id="marking-form">
+                <label for="student-name">Student Name:</label>
+                <input type="text" id="student-name" placeholder="Enter student name"><br>
+
+                <label for="student-class">Class:</label>
+                <input type="text" id="student-class" placeholder="Enter student class"><br>
+
+                <label for="student-arm">Arm:</label>
+                <input type="text" id="student-arm" placeholder="Enter student arm"><br>
+
+                <label for="obj-answers-m">Objective Answers:</label><br>
+                <input type="text" id="obj-answers-m" placeholder="Enter student's objective answers"><br>
+
+                <label for="essay-answers-m">Essay Answers:</label><br>
+                <textarea id="essay-answers-m" placeholder="Enter student's essay answers"></textarea><br>
+
+                <button type="button" onclick="markAnswers()">Mark Answers</button>
+            </form>
+        </div>
+
+        <!-- Score Tab -->
+        <div class="tab" id="score-tab">
+            <h2>Score Tab</h2>
+            <button type="button" onclick="downloadScores()">Download Scores</button>
+            <div id="score-list"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
