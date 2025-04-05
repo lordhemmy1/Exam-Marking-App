@@ -1,78 +1,48 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    margin: 0;
-    padding: 0;
-}
+/* styles.css */ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
 
-.container {
-    width: 80%;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
+header { background-color: #333; color: #fff; padding: 10px; text-align: center; }
 
-h1 {
-    text-align: center;
-    color: #4CAF50;
-}
+.tabs { display: flex; justify-content: center; background-color: #ddd; }
 
-.tab-nav {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-}
+.tab-btn { padding: 10px 20px; cursor: pointer; background-color: #ccc; margin: 5px; border-radius: 5px; transition: background-color 0.3s; font-weight: bold; }
 
-.tab-button {
-    padding: 10px 20px;
-    margin: 0 5px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+.tab-btn:hover { background-color: #bbb; }
 
-.tab-button:hover {
-    background-color: #45a049;
-}
+.tab { display: none; padding: 20px; border-top: 2px solid #333; background-color: #fff; max-width: 900px; margin: auto; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; }
 
-.tab {
-    display: none;
-}
+form input, form textarea { display: block; width: 100%; margin: 8px 0; padding: 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
 
-#score-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+form textarea { resize: vertical; height: 60px; }
 
-#score-table th, #score-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-}
+.essay-row { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #fafafa; border-radius: 6px; }
 
-#score-table th {
-    background-color: #4CAF50;
-    color: white;
-}
+.section-title { font-weight: bold; margin-top: 20px; margin-bottom: 10px; font-size: 18px; border-bottom: 2px solid #333; padding-bottom: 5px; }
 
-button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
+button, .upload-btn { margin-top: 10px; padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
 
-button:hover {
-    background-color: #45a049;
-}
+button:hover, .upload-btn:hover { background-color: #45a049; }
 
-input[type="file"] {
-    margin-top: 10px;
-}
+input[type="file"] { display: none; }
+
+.upload-note { font-size: 12px; color: #555; margin-top: 5px; margin-bottom: 10px; background-color: #eee; padding: 5px; border-radius: 4px; }
+
+#score-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+
+#score-table th, #score-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+
+#score-table th { background-color: #333; color: white; }
+
+.score-controls { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+input[type="text"], input[type="number"] { padding: 8px; width: 100%; box-sizing: border-box; }
+
+.student-info { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+
+.student-info input { flex: 1; min-width: 100px; }
+
+@media (max-width: 768px) { .tabs { flex-direction: column; align-items: center; }
+
+.tab-btn { width: 80%; text-align: center; }
+
+.student-info { flex-direction: column; } }
+
