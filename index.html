@@ -10,48 +10,59 @@
     <div class="container">
         <h1>Examination Marking App</h1>
 
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <button class="tab-button" onclick="showTab('answer-tab')">Answer Tab</button>
+            <button class="tab-button" onclick="showTab('marking-tab')">Marking Tab</button>
+            <button class="tab-button" onclick="showTab('score-tab')">Score Tab</button>
+        </div>
+
         <!-- Answer Tab -->
         <div class="tab" id="answer-tab">
             <h2>Answer Tab</h2>
-            <form id="answer-form">
-                <label for="obj-answers">Objective Answers:</label><br>
-                <input type="text" id="obj-answers" placeholder="Enter objective answers"><br>
-
-                <label for="essay-answers">Essay Answers:</label><br>
-                <textarea id="essay-answers" placeholder="Enter essay answers"></textarea><br>
-
-                <button type="button" onclick="saveAnswers()">Save Answers</button>
-            </form>
+            <div class="form-section">
+                <h3>Objective Form</h3>
+                <input type="file" id="obj-file" accept=".xlsx, .csv" onchange="uploadObjFile(event)">
+                <div id="obj-form"></div>
+            </div>
+            <div class="form-section">
+                <h3>Essay Form</h3>
+                <input type="file" id="essay-file" accept=".xlsx, .csv" onchange="uploadEssayFile(event)">
+                <div id="essay-form"></div>
+            </div>
         </div>
 
         <!-- Marking Tab -->
         <div class="tab" id="marking-tab">
             <h2>Marking Tab</h2>
-            <form id="marking-form">
-                <label for="student-name">Student Name:</label>
-                <input type="text" id="student-name" placeholder="Enter student name"><br>
-
-                <label for="student-class">Class:</label>
-                <input type="text" id="student-class" placeholder="Enter student class"><br>
-
-                <label for="student-arm">Arm:</label>
-                <input type="text" id="student-arm" placeholder="Enter student arm"><br>
-
-                <label for="obj-answers-m">Objective Answers:</label><br>
-                <input type="text" id="obj-answers-m" placeholder="Enter student's objective answers"><br>
-
-                <label for="essay-answers-m">Essay Answers:</label><br>
-                <textarea id="essay-answers-m" placeholder="Enter student's essay answers"></textarea><br>
-
-                <button type="button" onclick="markAnswers()">Mark Answers</button>
-            </form>
+            <div class="form-section">
+                <h3>Objective Form</h3>
+                <input type="file" id="mark-obj-file" accept=".xlsx, .csv" onchange="uploadMarkObjFile(event)">
+                <div id="mark-obj-form"></div>
+            </div>
+            <div class="form-section">
+                <h3>Essay Form</h3>
+                <input type="file" id="mark-essay-file" accept=".xlsx, .csv" onchange="uploadMarkEssayFile(event)">
+                <div id="mark-essay-form"></div>
+            </div>
         </div>
 
         <!-- Score Tab -->
         <div class="tab" id="score-tab">
             <h2>Score Tab</h2>
-            <button type="button" onclick="downloadScores()">Download Scores</button>
-            <div id="score-list"></div>
+            <table id="score-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Arm</th>
+                        <th>Objective Score</th>
+                        <th>Essay Score</th>
+                        <th>Total Score</th>
+                    </tr>
+                </thead>
+                <tbody id="score-list"></tbody>
+            </table>
         </div>
     </div>
 
