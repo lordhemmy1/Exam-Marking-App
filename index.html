@@ -4,206 +4,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Examination Marking App</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .container {
-      width: 80%;
-      margin: auto;
-      font-family: Arial, sans-serif;
-    }
-    .tab-nav {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .tab-button {
-      padding: 10px 20px;
-      margin: 0 5px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .tab {
-      display: none;
-      border: 1px solid #ccc;
-      padding: 20px;
-      margin-top: 10px;
-    }
-    .active {
-      display: block;
-    }
-    .form-section {
-      border: 1px solid #ddd;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    .form-group {
-      margin-bottom: 10px;
-    }
-    textarea {
-      width: 100%;
-      height: 60px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-  </style>
 </head>
 <body>
-<div class="container">
-  <h1>Examination Marking App</h1>
-  <div class="tab-nav">
-    <button class="tab-button" onclick="showTab('answer')">Answer Tab</button>
-    <button class="tab-button" onclick="showTab('marking')">Marking Tab</button>
-    <button class="tab-button" onclick="showTab('score')">Score Tab</button>
-  </div>  <div id="answer" class="tab active">
-    <h2>Answer Tab</h2>
-    <div class="form-section">
-      <h3>Objective Form</h3>
-      <form id="objective-form"></form>
-      <button onclick="uploadFile('objective')">Upload Objective File</button>
-      <input type="file" id="objective-file" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event, 'objective')">
-    </div><div class="form-section">
-  <h3>Essay Form</h3>
-  <form id="essay-form"></form>
-  <button onclick="uploadFile('essay')">Upload Essay File</button>
-  <input type="file" id="essay-file" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event, 'essay')">
+  <div class="container">
+    <h1>Examination Marking App</h1><div class="tab-nav">
+  <button class="tab-button" onclick="showTab('answer-tab')">Answer Tab</button>
+  <button class="tab-button" onclick="showTab('marking-tab')">Marking Tab</button>
+  <button class="tab-button" onclick="showTab('score-tab')">Score Tab</button>
 </div>
 
-<button onclick="saveAnswers()">Save Answers</button>
+<!-- Answer Tab -->
+<div class="tab" id="answer-tab">
+  <h2>Answer Tab</h2>
+  <div class="form-box">
+    <h3>Objective Answers</h3>
+    <div id="answer-objective-form" class="dynamic-form"></div>
+    <button onclick="uploadObjectiveFile('answer')">Upload Objective File</button>
+    <p>Format: Row = Question Number, Column A = Answer</p>
 
-  </div>  <div id="marking" class="tab">
-    <h2>Marking Tab</h2>
-    <div class="form-section">
-      <h3>Student Info</h3>
-      <input type="text" id="student-name" placeholder="Student Name">
-      <input type="text" id="student-class" placeholder="Class">
-      <input type="text" id="student-arm" placeholder="Arm">
-    </div>
-    <div class="form-section">
-      <h3>Objective Answers</h3>
-      <form id="student-objective-form"></form>
-      <button onclick="uploadFile('student-objective')">Upload Student Objective File</button>
-      <input type="file" id="student-objective-file" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event, 'student-objective')">
-    </div>
-    <div class="form-section">
-      <h3>Essay Answers</h3>
-      <form id="student-essay-form"></form>
-      <button onclick="uploadFile('student-essay')">Upload Student Essay File</button>
-      <input type="file" id="student-essay-file" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event, 'student-essay')">
-    </div>
-    <button onclick="markAnswers()">Mark Answers</button>
-  </div>  <div id="score" class="tab">
-    <h2>Score Tab</h2>
-    <div class="form-section">
-      <table>
-        <thead>
-          <tr>
-            <th>Student Name</th>
-            <th>Class</th>
-            <th>Arm</th>
-            <th>Objective Score</th>
-            <th>Essay Score</th>
-            <th>Total Score</th>
-          </tr>
-        </thead>
-        <tbody id="score-table-body"></tbody>
-      </table>
-    </div>
+    <h3>Essay Answers</h3>
+    <div id="answer-essay-form" class="dynamic-form"></div>
+    <button onclick="uploadEssayFile('answer')">Upload Essay File</button>
+    <p>Format: Column A = Question Number, B = Mark, C = Answer</p>
+
+    <button onclick="saveAnswerData()">Save Answers</button>
   </div>
-</div><script>
-  const objectiveForm = document.getElementById('objective-form');
-  const essayForm = document.getElementById('essay-form');
-  const studentObjectiveForm = document.getElementById('student-objective-form');
-  const studentEssayForm = document.getElementById('student-essay-form');
-  let answerData = { objectives: {}, essays: {} };
+</div>
 
-  function showTab(tabId) {
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-  }
+<!-- Marking Tab -->
+<div class="tab" id="marking-tab" style="display:none;">
+  <h2>Marking Tab</h2>
+  <div class="form-box">
+    <h3>Objective Marking</h3>
+    <div id="marking-objective-form" class="dynamic-form"></div>
+    <button onclick="uploadObjectiveFile('marking')">Upload Objective File</button>
+    <p>Format: Row = Question Number, Column A = Answer</p>
 
-  function generateObjectiveFields(form, count = 10) {
-    form.innerHTML = '';
-    for (let i = 1; i <= count; i++) {
-      const div = document.createElement('div');
-      div.className = 'form-group';
-      div.innerHTML = `<label>Q${i}: <input type="text" name="q${i}" onchange="checkLast(this.form, ${i})"></label>`;
-      form.appendChild(div);
-    }
-  }
+    <h3>Essay Marking</h3>
+    <div id="marking-essay-form" class="dynamic-form"></div>
+    <button onclick="uploadEssayFile('marking')">Upload Essay File</button>
+    <p>Format: Column A = Question Number, B = Mark, C = Answer</p>
 
-  function checkLast(form, index) {
-    if (index === form.children.length && index < 100) {
-      const next = index + 1;
-      const div = document.createElement('div');
-      div.className = 'form-group';
-      div.innerHTML = `<label>Q${next}: <input type="text" name="q${next}" onchange="checkLast(this.form, ${next})"></label>`;
-      form.appendChild(div);
-    }
-  }
+    <button onclick="saveMarkingData()">Save for Comparison</button>
+  </div>
+</div>
 
-  function generateEssayFields(form, count = 20) {
-    form.innerHTML = '';
-    for (let i = 1; i <= count; i++) {
-      const div = document.createElement('div');
-      div.className = 'form-group';
-      div.innerHTML = `<label>Q${i} ID: <input type="text" name="q${i}num" placeholder="e.g. 1a" /> <br><textarea name="q${i}text" placeholder="Enter answer here"></textarea></label>`;form.appendChild(div);
-}
+<!-- Score Tab -->
+<div class="tab" id="score-tab" style="display:none;">
+  <h2>Score Tab</h2>
+  <table id="score-table">
+    <thead>
+      <tr>
+        <th>Student Name</th>
+        <th>Class</th>
+        <th>Arm</th>
+        <th>Objective Score</th>
+        <th>Essay Score</th>
+        <th>Total Score</th>
+      </tr>
+    </thead>
+    <tbody id="score-body"></tbody>
+  </table>
+  <div>
+    <button onclick="downloadScores('csv')">Download CSV</button>
+    <button onclick="downloadScores('xlsx')">Download XLSX</button>
+    <button onclick="downloadScores('doc')">Download DOC</button>
+    <button onclick="resetScores()">Reset</button>
+  </div>
+</div>
 
-}
-
-function uploadFile(type) { document.getElementById(${type}-file).click(); }
-
-function handleFileUpload(event, type) { const file = event.target.files[0]; if (!file) return; alert(${type.charAt(0).toUpperCase() + type.slice(1)} file uploaded: ${file.name}); // Add SheetJS logic here }
-
-function saveAnswers() { answerData.objectives = Object.fromEntries(new FormData(objectiveForm).entries()); const essayEntries = new FormData(essayForm).entries(); answerData.essays = {}; for (let [key, value] of essayEntries) { if (key.endsWith('num')) { const index = key.replace('num', ''); answerData.essays[value.toLowerCase()] = essayForm.querySelector([name='${index}text']).value; } } alert("Answers saved for comparison."); }
-
-function markAnswers() { const studentObjectives = Object.fromEntries(new FormData(studentObjectiveForm).entries()); const studentEssayEntries = new FormData(studentEssayForm).entries(); const studentEssays = {}; for (let [key, value] of studentEssayEntries) { if (key.endsWith('num')) { const index = key.replace('num', ''); studentEssays[value.toLowerCase()] = studentEssayForm.querySelector([name='${index}text']).value; } }
-
-let objectiveScore = 0;
-for (let key in answerData.objectives) {
-  if (studentObjectives[key] && studentObjectives[key].trim().toLowerCase() === answerData.objectives[key].trim().toLowerCase()) {
-    objectiveScore++;
-  }
-}
-
-let essayScore = 0;
-for (let key in answerData.essays) {
-  if (studentEssays[key] && studentEssays[key].toLowerCase().includes(answerData.essays[key].toLowerCase().slice(0, 5))) {
-    essayScore += 5; // Arbitrary score value, adjust as needed
-  }
-}
-
-const studentName = document.getElementById('student-name').value;
-const studentClass = document.getElementById('student-class').value;
-const studentArm = document.getElementById('student-arm').value;
-const total = objectiveScore + essayScore;
-
-const row = `<tr>
-  <td>${studentName}</td>
-  <td>${studentClass}</td>
-  <td>${studentArm}</td>
-  <td>${objectiveScore}</td>
-  <td>${essayScore}</td>
-  <td>${total}</td>
-</tr>`;
-document.getElementById('score-table-body').innerHTML += row;
-alert("Scoring complete and saved.");
-
-}
-
-generateObjectiveFields(objectiveForm); generateObjectiveFields(studentObjectiveForm); generateEssayFields(essayForm); generateEssayFields(studentEssayForm); </script>
-
-</body>
+  </div>  <script src="script.js"></script></body>
 </html>
