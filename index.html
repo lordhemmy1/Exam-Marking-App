@@ -45,6 +45,18 @@
       width: 100%;
       height: 60px;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
   </style>
 </head>
 <body>
@@ -72,57 +84,126 @@
 
   </div>  <div id="marking" class="tab">
     <h2>Marking Tab</h2>
-    <!-- Future Marking Features -->
+    <div class="form-section">
+      <h3>Student Info</h3>
+      <input type="text" id="student-name" placeholder="Student Name">
+      <input type="text" id="student-class" placeholder="Class">
+      <input type="text" id="student-arm" placeholder="Arm">
+    </div>
+    <div class="form-section">
+      <h3>Objective Answers</h3>
+      <form id="student-objective-form"></form>
+      <button onclick="uploadFile('student-objective')">Upload Student Objective File</button>
+      <input type="file" id="student-objective-file" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event, 'student-objective')">
+    </div>
+    <div class="form-section">
+      <h3>Essay Answers</h3>
+      <form id="student-essay-form"></form>
+      <button onclick="uploadFile('student-essay')">Upload Student Essay File</button>
+      <input type="file" id="student-essay-file" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event, 'student-essay')">
+    </div>
+    <button onclick="markAnswers()">Mark Answers</button>
   </div>  <div id="score" class="tab">
     <h2>Score Tab</h2>
-    <!-- Future Score Table -->
+    <div class="form-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Class</th>
+            <th>Arm</th>
+            <th>Objective Score</th>
+            <th>Essay Score</th>
+            <th>Total Score</th>
+          </tr>
+        </thead>
+        <tbody id="score-table-body"></tbody>
+      </table>
+    </div>
   </div>
 </div><script>
   const objectiveForm = document.getElementById('objective-form');
   const essayForm = document.getElementById('essay-form');
+  const studentObjectiveForm = document.getElementById('student-objective-form');
+  const studentEssayForm = document.getElementById('student-essay-form');
+  let answerData = { objectives: {}, essays: {} };
 
   function showTab(tabId) {
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
   }
 
-  function generateObjectiveFields(count = 10) {
-    objectiveForm.innerHTML = '';
+  function generateObjectiveFields(form, count = 10) {
+    form.innerHTML = '';
     for (let i = 1; i <= count; i++) {
       const div = document.createElement('div');
       div.className = 'form-group';
-      div.innerHTML = `<label>Q${i}: <input type="text" name="q${i}" onchange="checkLast(${i})"></label>`;
-      objectiveForm.appendChild(div);
+      div.innerHTML = `<label>Q${i}: <input type="text" name="q${i}" onchange="checkLast(this.form, ${i})"></label>`;
+      form.appendChild(div);
     }
   }
 
-  function checkLast(index) {
-    if (index === objectiveForm.children.length) {
+  function checkLast(form, index) {
+    if (index === form.children.length && index < 100) {
       const next = index + 1;
       const div = document.createElement('div');
       div.className = 'form-group';
-      div.innerHTML = `<label>Q${next}: <input type="text" name="q${next}" onchange="checkLast(${next})"></label>`;
-      objectiveForm.appendChild(div);
+      div.innerHTML = `<label>Q${next}: <input type="text" name="q${next}" onchange="checkLast(this.form, ${next})"></label>`;
+      form.appendChild(div);
     }
   }
 
-  function generateEssayFields(count = 20) {
-    essayForm.innerHTML = '';
+  function generateEssayFields(form, count = 20) {
+    form.innerHTML = '';
     for (let i = 1; i <= count; i++) {
       const div = document.createElement('div');
       div.className = 'form-group';
-      div.innerHTML = `<label>Q${i}: <input type="text" name="q${i}num" placeholder="e.g. 1a" /> <br><textarea name="q${i}text" placeholder="Enter answer here"></textarea></label>`;essayForm.appendChild(div);
+      div.innerHTML = `<label>Q${i} ID: <input type="text" name="q${i}num" placeholder="e.g. 1a" /> <br><textarea name="q${i}text" placeholder="Enter answer here"></textarea></label>`;form.appendChild(div);
 }
 
 }
 
 function uploadFile(type) { document.getElementById(${type}-file).click(); }
 
-function handleFileUpload(event, type) { const file = event.target.files[0]; if (!file) return; alert(${type.charAt(0).toUpperCase() + type.slice(1)} file uploaded: ${file.name}); // You can parse CSV/XLSX using SheetJS here }
+function handleFileUpload(event, type) { const file = event.target.files[0]; if (!file) return; alert(${type.charAt(0).toUpperCase() + type.slice(1)} file uploaded: ${file.name}); // Add SheetJS logic here }
 
-function saveAnswers() { alert("Answers saved for comparison."); // You can save form data to localStorage or JSON }
+function saveAnswers() { answerData.objectives = Object.fromEntries(new FormData(objectiveForm).entries()); const essayEntries = new FormData(essayForm).entries(); answerData.essays = {}; for (let [key, value] of essayEntries) { if (key.endsWith('num')) { const index = key.replace('num', ''); answerData.essays[value.toLowerCase()] = essayForm.querySelector([name='${index}text']).value; } } alert("Answers saved for comparison."); }
 
-// Initialize generateObjectiveFields(); generateEssayFields(); </script>
+function markAnswers() { const studentObjectives = Object.fromEntries(new FormData(studentObjectiveForm).entries()); const studentEssayEntries = new FormData(studentEssayForm).entries(); const studentEssays = {}; for (let [key, value] of studentEssayEntries) { if (key.endsWith('num')) { const index = key.replace('num', ''); studentEssays[value.toLowerCase()] = studentEssayForm.querySelector([name='${index}text']).value; } }
+
+let objectiveScore = 0;
+for (let key in answerData.objectives) {
+  if (studentObjectives[key] && studentObjectives[key].trim().toLowerCase() === answerData.objectives[key].trim().toLowerCase()) {
+    objectiveScore++;
+  }
+}
+
+let essayScore = 0;
+for (let key in answerData.essays) {
+  if (studentEssays[key] && studentEssays[key].toLowerCase().includes(answerData.essays[key].toLowerCase().slice(0, 5))) {
+    essayScore += 5; // Arbitrary score value, adjust as needed
+  }
+}
+
+const studentName = document.getElementById('student-name').value;
+const studentClass = document.getElementById('student-class').value;
+const studentArm = document.getElementById('student-arm').value;
+const total = objectiveScore + essayScore;
+
+const row = `<tr>
+  <td>${studentName}</td>
+  <td>${studentClass}</td>
+  <td>${studentArm}</td>
+  <td>${objectiveScore}</td>
+  <td>${essayScore}</td>
+  <td>${total}</td>
+</tr>`;
+document.getElementById('score-table-body').innerHTML += row;
+alert("Scoring complete and saved.");
+
+}
+
+generateObjectiveFields(objectiveForm); generateObjectiveFields(studentObjectiveForm); generateEssayFields(essayForm); generateEssayFields(studentEssayForm); </script>
 
 </body>
 </html>
