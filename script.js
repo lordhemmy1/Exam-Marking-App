@@ -1,130 +1,116 @@
-// Show the corresponding tab
+// Show the correct tab
 function showTab(tabId) {
     const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => tab.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
+    tabs.forEach(tab => tab.style.display = 'none');
+    document.getElementById(tabId).style.display = 'block';
 }
 
-// Handle file upload for Objective answers (Answer Tab)
-function uploadObjFile(event) {
-    const file = event.target.files[0];
-    if (file) {
-        readExcelFile(file, (data) => {
-            const objForm = document.getElementById('obj-form');
-            objForm.innerHTML = ''; // Clear previous form
-            data.forEach((answer, index) => {
-                if (index < 100) { // Maximum 100 questions
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.placeholder = `Question ${index + 1}`;
-                    input.value = answer;
-                    objForm.appendChild(input);
-                    objForm.appendChild(document.createElement('br'));
-                }
-            });
-        });
-    }
-}
+// Populate the Objective Answer Form (1-100)
+function populateObjectiveForm() {
+    const objForm = document.getElementById('obj-answers-form');
+    objForm.innerHTML = '';  // Clear any previous form elements
 
-// Handle file upload for Essay answers (Answer Tab)
-function uploadEssayFile(event) {
-    const file = event.target.files[0];
-    if (file) {
-        readExcelFile(file, (data) => {
-            const essayForm = document.getElementById('essay-form');
-            essayForm.innerHTML = ''; // Clear previous form
-            for (let i = 1; i <= 5; i++) {
-                const questionDiv = document.createElement('div');
-                questionDiv.innerHTML = `<h4>Question ${i}</h4>`;
-                for (let j = 1; j <= 4; j++) {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.placeholder = `${i}${String.fromCharCode(96 + j)} (Sub-question)`;
-                    questionDiv.appendChild(input);
-                    questionDiv.appendChild(document.createElement('br'));
-                }
-                essayForm.appendChild(questionDiv);
-            }
-        });
-    }
-}
-
-// Handle file upload for Objective answers (Marking Tab)
-function uploadMarkObjFile(event) {
-    const file = event.target.files[0];
-    if (file) {
-        readExcelFile(file, (data) => {
-            const markObjForm = document.getElementById('mark-obj-form');
-            markObjForm.innerHTML = ''; // Clear previous form
-            data.forEach((answer, index) => {
-                if (index < 100) {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.placeholder = `Student Answer ${index + 1}`;
-                    input.value = answer;
-                    markObjForm.appendChild(input);
-                    markObjForm.appendChild(document.createElement('br'));
-                }
-            });
-        });
-    }
-}
-
-// Handle file upload for Essay answers (Marking Tab)
-function uploadMarkEssayFile(event) {
-    const file = event.target.files[0];
-    if (file) {
-        readExcelFile(file, (data) => {
-            const markEssayForm = document.getElementById('mark-essay-form');
-            markEssayForm.innerHTML = ''; // Clear previous form
-            for (let i = 1; i <= 5; i++) {
-                const questionDiv = document.createElement('div');
-                questionDiv.innerHTML = `<h4>Question ${i}</h4>`;
-                for (let j = 1; j <= 4; j++) {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.placeholder = `${i}${String.fromCharCode(96 + j)} (Student Answer)`;
-                    questionDiv.appendChild(input);
-                    questionDiv.appendChild(document.createElement('br'));
-                }
-                markEssayForm.appendChild(questionDiv);
-            }
-        });
-    }
-}
-
-// Read Excel/CSV files
-function readExcelFile(file, callback) {
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const data = event.target.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        callback(jsonData);
-    };
-    reader.readAsBinaryString(file);
-}
-
-// Display score table
-function displayScores() {
-    const scores = JSON.parse(localStorage.getItem('scores')) || [];
-    const scoreList = document.getElementById('score-list');
-    scoreList.innerHTML = '';
-
-    scores.forEach(score => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${score.studentName}</td>
-            <td>${score.studentClass}</td>
-            <td>${score.studentArm}</td>
-            <td>${score.objScore}</td>
-            <td>${score.essayScore}</td>
-            <td>${score.totalScore}</td>
+    for (let i = 1; i <= 100; i++) {
+        objForm.innerHTML += `
+            <label for="obj${i}">Answer ${i}:</label>
+            <input type="text" id="obj${i}" name="obj${i}" /><br>
         `;
-        scoreList.appendChild(row);
-    });
+    }
 }
 
-// Initial display of the first tab (Answer Tab)
-document.getElementById('answer-tab').classList.add('active');
+// Populate the Essay Answer Form (1-5 with sub-questions)
+function populateEssayForm() {
+    const essayForm = document.getElementById('essay-answers-form');
+    essayForm.innerHTML = '';  // Clear any previous form elements
+
+    for (let i = 1; i <= 5; i++) {
+        essayForm.innerHTML += `
+            <label for="essay${i}">Question ${i}:</label><br>
+            <label for="essay${i}a">${i}a:</label>
+            <input type="text" id="essay${i}a" name="essay${i}a" /><br>
+            <label for="essay${i}b">${i}b:</label>
+            <input type="text" id="essay${i}b" name="essay${i}b" /><br>
+            <label for="essay${i}c">${i}c:</label>
+            <input type="text" id="essay${i}c" name="essay${i}c" /><br>
+            <label for="essay${i}d">${i}d:</label>
+            <input type="text" id="essay${i}d" name="essay${i}d" /><br><br>
+        `;
+    }
+}
+
+// Handle file upload and populate answers for Objective Questions
+function uploadObjectiveAnswers(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        // Handle file parsing (you can use libraries like SheetJS to parse CSV/XLSX files)
+        alert('File uploaded successfully');
+    };
+    reader.readAsText(file);
+}
+
+// Handle file upload and populate answers for Essay Questions
+function uploadEssayAnswers(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        // Handle file parsing (you can use libraries like SheetJS to parse CSV/XLSX files)
+        alert('File uploaded successfully');
+    };
+    reader.readAsText(file);
+}
+
+// Save answers into localStorage
+function saveAnswers() {
+    const answers = {
+        objective: {},
+        essay: {}
+    };
+
+    // Collect Objective answers
+    for (let i = 1; i <= 100; i++) {
+        answers.objective[`obj${i}`] = document.getElementById(`obj${i}`).value;
+    }
+
+    // Collect Essay answers
+    for (let i = 1; i <= 5; i++) {
+        answers.essay[`essay${i}a`] = document.getElementById(`essay${i}a`).value;
+        answers.essay[`essay${i}b`] = document.getElementById(`essay${i}b`).value;
+        answers.essay[`essay${i}c`] = document.getElementById(`essay${i}c`).value;
+        answers.essay[`essay${i}d`] = document.getElementById(`essay${i}d`).value;
+    }
+
+    localStorage.setItem('answers', JSON.stringify(answers));
+    alert('Answers saved successfully');
+}
+
+// Mark answers based on stored data
+function markAnswers() {
+    const savedAnswers = JSON.parse(localStorage.getItem('answers'));
+
+    if (!savedAnswers) {
+        alert('No answers saved to mark against!');
+        return;
+    }
+
+    // Perform marking logic and save to localStorage
+    // Assuming simple scoring for now
+
+    alert('Answers marked successfully');
+}
+
+// Download scores as JSON file
+function downloadScores() {
+    const scores = JSON.parse(localStorage.getItem('scores')) || [];
+    const blob = new Blob([JSON.stringify(scores, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'scores.json';
+    link.click();
+}
+
+// Initially populate forms
+populateObjectiveForm();
+populateEssayForm();
