@@ -7,7 +7,8 @@
 </head>
 <body>
   <div class="container">
-    <h1>Examination Marking App</h1><div class="tab-nav">
+    <h1>Examination Marking App</h1><!-- Tab Navigation -->
+<div class="tab-nav">
   <button class="tab-button" onclick="showTab('answer-tab')">Answer Tab</button>
   <button class="tab-button" onclick="showTab('marking-tab')">Marking Tab</button>
   <button class="tab-button" onclick="showTab('score-tab')">Score Tab</button>
@@ -15,42 +16,40 @@
 
 <!-- Answer Tab -->
 <div class="tab" id="answer-tab">
-  <h2>Answer Tab</h2>
-  <div class="form-box">
-    <h3>Objective Answers</h3>
-    <div id="answer-objective-form" class="dynamic-form"></div>
-    <button onclick="uploadObjectiveFile('answer')">Upload Objective File</button>
-    <p>Format: Row = Question Number, Column A = Answer</p>
+  <div class="form-section">
+    <h2>Objective Answers</h2>
+    <form id="answer-objective-form"></form>
+    <button onclick="uploadFile('answer-objective')">Upload File</button>
+    <div class="note">Expected format: Column A - Question No, Column B - Answer</div>
 
-    <h3>Essay Answers</h3>
-    <div id="answer-essay-form" class="dynamic-form"></div>
-    <button onclick="uploadEssayFile('answer')">Upload Essay File</button>
-    <p>Format: Column A = Question Number, B = Mark, C = Answer</p>
+    <h2>Essay Answers</h2>
+    <form id="answer-essay-form"></form>
+    <button onclick="uploadFile('answer-essay')">Upload File</button>
+    <div class="note">Expected format: Column A - Question No, Column B - Sub No, Column C - Answer, Column D - Mark</div>
 
-    <button onclick="saveAnswerData()">Save Answers</button>
+    <button onclick="saveAnswerData()">Save</button>
   </div>
 </div>
 
 <!-- Marking Tab -->
-<div class="tab" id="marking-tab" style="display:none;">
-  <h2>Marking Tab</h2>
-  <div class="form-box">
-    <h3>Objective Marking</h3>
-    <div id="marking-objective-form" class="dynamic-form"></div>
-    <button onclick="uploadObjectiveFile('marking')">Upload Objective File</button>
-    <p>Format: Row = Question Number, Column A = Answer</p>
+<div class="tab" id="marking-tab">
+  <div class="form-section">
+    <h2>Objective Marking</h2>
+    <form id="marking-objective-form"></form>
+    <button onclick="uploadFile('marking-objective')">Upload File</button>
+    <div class="note">Expected format: Column A - Question No, Column B - Answer</div>
 
-    <h3>Essay Marking</h3>
-    <div id="marking-essay-form" class="dynamic-form"></div>
-    <button onclick="uploadEssayFile('marking')">Upload Essay File</button>
-    <p>Format: Column A = Question Number, B = Mark, C = Answer</p>
+    <h2>Essay Marking</h2>
+    <form id="marking-essay-form"></form>
+    <button onclick="uploadFile('marking-essay')">Upload File</button>
+    <div class="note">Expected format: Column A - Question No, Column B - Sub No, Column C - Answer, Column D - Mark</div>
 
-    <button onclick="saveMarkingData()">Save for Comparison</button>
+    <button onclick="saveMarkingData()">Save</button>
   </div>
 </div>
 
 <!-- Score Tab -->
-<div class="tab" id="score-tab" style="display:none;">
+<div class="tab" id="score-tab">
   <h2>Score Tab</h2>
   <table id="score-table">
     <thead>
@@ -63,14 +62,12 @@
         <th>Total Score</th>
       </tr>
     </thead>
-    <tbody id="score-body"></tbody>
+    <tbody></tbody>
   </table>
-  <div>
-    <button onclick="downloadScores('csv')">Download CSV</button>
-    <button onclick="downloadScores('xlsx')">Download XLSX</button>
-    <button onclick="downloadScores('doc')">Download DOC</button>
-    <button onclick="resetScores()">Reset</button>
-  </div>
+  <button onclick="downloadScores('doc')">Download DOC</button>
+  <button onclick="downloadScores('xlsx')">Download XLSX</button>
+  <button onclick="downloadScores('csv')">Download CSV</button>
+  <button onclick="resetScores()">Reset</button>
 </div>
 
   </div>  <script src="script.js"></script></body>
