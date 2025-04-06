@@ -1,48 +1,46 @@
-/* styles.css */ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+/* styles.css */ body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
 
-header { background-color: #333; color: #fff; padding: 10px; text-align: center; }
+header { background: #007bff; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold; }
 
-.tabs { display: flex; justify-content: center; background-color: #ddd; }
+nav { display: flex; justify-content: center; background: #e0e0e0; border-bottom: 1px solid #ccc; }
 
-.tab-btn { padding: 10px 20px; cursor: pointer; background-color: #ccc; margin: 5px; border-radius: 5px; transition: background-color 0.3s; font-weight: bold; }
+.tab-button { padding: 1rem 2rem; cursor: pointer; background: #ccc; border: none; outline: none; margin: 0 0.25rem; font-size: 1rem; transition: background 0.3s; }
 
-.tab-btn:hover { background-color: #bbb; }
+.tab-button.active { background: #007bff; color: white; font-weight: bold; }
 
-.tab { display: none; padding: 20px; border-top: 2px solid #333; background-color: #fff; max-width: 900px; margin: auto; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; }
+.tab-content { display: none; padding: 2rem; background: white; border: 2px solid #007bff; margin: 2rem; border-radius: 8px; }
 
-form input, form textarea { display: block; width: 100%; margin: 8px 0; padding: 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
+.tab-content.active { display: block; }
 
-form textarea { resize: vertical; height: 60px; }
+h3 { margin-bottom: 1rem; color: #333; }
 
-.essay-row { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #fafafa; border-radius: 6px; }
+form { margin-bottom: 1.5rem; }
 
-.section-title { font-weight: bold; margin-top: 20px; margin-bottom: 10px; font-size: 18px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+form div { margin-bottom: 1rem; }
 
-button, .upload-btn { margin-top: 10px; padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+label { display: inline-block; min-width: 60px; font-weight: 500; margin-right: 10px; }
 
-button:hover, .upload-btn:hover { background-color: #45a049; }
+input[type="text"], input[type="number"], textarea { padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; width: 300px; max-width: 100%; }
 
-input[type="file"] { display: none; }
+textarea { width: 100%; height: 60px; }
 
-.upload-note { font-size: 12px; color: #555; margin-top: 5px; margin-bottom: 10px; background-color: #eee; padding: 5px; border-radius: 4px; }
+button { padding: 0.5rem 1.25rem; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
 
-#score-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+button:hover { background: #0056b3; }
 
-#score-table th, #score-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+.upload-note { font-size: 0.9rem; color: #555; margin-bottom: 1rem; font-style: italic; }
 
-#score-table th { background-color: #333; color: white; }
+#score-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
 
-.score-controls { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+#score-table th, #score-table td { padding: 0.75rem; border: 1px solid #ccc; text-align: center; }
 
-input[type="text"], input[type="number"] { padding: 8px; width: 100%; box-sizing: border-box; }
+#score-table th { background: #007bff; color: white; font-weight: bold; }
 
-.student-info { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+#score-table tbody tr:nth-child(even) { background: #f2f2f2; }
 
-.student-info input { flex: 1; min-width: 100px; }
+.score-controls { margin-top: 2rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 
-@media (max-width: 768px) { .tabs { flex-direction: column; align-items: center; }
+.score-controls button { flex: 1; min-width: 150px; }
 
-.tab-btn { width: 80%; text-align: center; }
-
-.student-info { flex-direction: column; } }
+@media screen and (max-width: 600px) { nav { flex-direction: column; } .tab-button { width: 100%; text-align: center; } input[type="text"], input[type="number"], textarea { width: 100%; } .score-controls { flex-direction: column; } }
 
