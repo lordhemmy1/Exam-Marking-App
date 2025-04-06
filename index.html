@@ -2,169 +2,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Examination Marking App</title>
+  <title>Exam Marking App</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      width: 90%;
-      margin: auto;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .tab-nav {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .tab-button {
-      padding: 10px 20px;
-      border: none;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
-      margin: 0 5px;
-    }
-    .tab-button:hover {
-      background: #0056b3;
-    }
-    .tab {
-      display: none;
-    }
-    .tab.active {
-      display: block;
-    }
-    .form-section {
-      border: 1px solid #ccc;
-      padding: 20px;
-      background: #fff;
-      margin-bottom: 20px;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    input[type="text"], input[type="number"], textarea {
-      padding: 8px;
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    textarea {
-      height: 60px;
-    }
-    button {
-      padding: 10px;
-      background: #28a745;
-      color: white;
-      border: none;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:hover {
-      background: #218838;
-    }
-    .note {
-      font-size: 0.9em;
-      color: #555;
-      margin-top: 5px;
-      font-style: italic;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-    th, td {
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Examination Marking App</h1><!-- Tab Navigation -->
-<div class="tab-nav">
-  <button class="tab-button" onclick="showTab('answer-tab')">Answer Tab</button>
-  <button class="tab-button" onclick="showTab('marking-tab')">Marking Tab</button>
-  <button class="tab-button" onclick="showTab('score-tab')">Score Tab</button>
-</div>
-
-<!-- Answer Tab -->
-<div class="tab active" id="answer-tab">
-  <div class="form-section">
-    <h2>Objective Answers</h2>
-    <form id="answer-objective-form"></form>
-    <button onclick="uploadFile('answer-objective')">Upload File</button>
-    <div class="note">Expected format: Column A - Question No, Column B - Answer</div>
-
-    <h2>Essay Answers</h2>
-    <form id="answer-essay-form"></form>
-    <button onclick="uploadFile('answer-essay')">Upload File</button>
-    <div class="note">Expected format: Column A - Question No, Column B - Sub No, Column C - Answer, Column D - Mark</div>
-
-    <button onclick="saveAnswerData()">Save</button>
-  </div>
-</div>
-
-<!-- Marking Tab -->
-<div class="tab" id="marking-tab">
-  <div class="form-section">
-    <h2>Objective Marking</h2>
-    <form id="marking-objective-form"></form>
-    <button onclick="uploadFile('marking-objective')">Upload File</button>
-    <div class="note">Expected format: Column A - Question No, Column B - Answer</div>
-
-    <h2>Essay Marking</h2>
-    <form id="marking-essay-form"></form>
-    <button onclick="uploadFile('marking-essay')">Upload File</button>
-    <div class="note">Expected format: Column A - Question No, Column B - Sub No, Column C - Answer, Column D - Mark</div>
-
-    <button onclick="saveMarkingData()">Save</button>
-  </div>
-</div>
-
-<!-- Score Tab -->
-<div class="tab" id="score-tab">
-  <h2>Score Tab</h2>
-  <table id="score-table">
-    <thead>
-      <tr>
-        <th>Student Name</th>
-        <th>Class</th>
-        <th>Arm</th>
-        <th>Objective Score</th>
-        <th>Essay Score</th>
-        <th>Total Score</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <button onclick="downloadScores('doc')">Download DOC</button>
-  <button onclick="downloadScores('xlsx')">Download XLSX</button>
-  <button onclick="downloadScores('csv')">Download CSV</button>
-  <button onclick="resetScores()">Reset</button>
-</div>
-
-  </div>  <script src="script.js"></script>  <script>
-    function showTab(tabId) {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-    }
-  </script></body>
+  <header>Examination Marking App</header>
+  <nav>
+    <button class="tab-button active" data-tab="answer">Answer Tab</button>
+    <button class="tab-button" data-tab="marking">Marking Tab</button>
+    <button class="tab-button" data-tab="score">Score Tab</button>
+  </nav>  <section id="answer" class="tab-content active">
+    <h3>Objective Answer Form</h3>
+    <form id="objective-answer-form"></form>
+    <div class="upload-note">Upload file format: Column A - Question No., Column B - Correct Answer</div>
+    <button onclick="uploadObjectiveAnswerFile()">Upload Objective File</button>
+    <hr>
+    <h3>Essay Answer Form</h3>
+    <form id="essay-answer-form"></form>
+    <div class="upload-note">Upload format: Column A - Question No., Column B - Mark, Column C - Answer</div>
+    <button onclick="uploadEssayAnswerFile()">Upload Essay File</button>
+    <br><br>
+    <button onclick="saveAnswerData()">Save Answer Data</button>
+  </section>  <section id="marking" class="tab-content">
+    <h3>Student Information</h3>
+    <form id="student-info-form">
+      <div><label>Name:</label><input type="text" id="student-name"></div>
+      <div><label>Class:</label><input type="text" id="student-class"></div>
+      <div><label>Arm:</label><input type="text" id="student-arm"></div>
+    </form>
+    <h3>Objective Answer Form</h3>
+    <form id="objective-marking-form"></form>
+    <div class="upload-note">Upload file format: Column A - Question No., Column B - Answer</div>
+    <button onclick="uploadObjectiveMarkingFile()">Upload Objective File</button>
+    <hr>
+    <h3>Essay Answer Form</h3>
+    <form id="essay-marking-form"></form>
+    <div class="upload-note">Upload format: Column A - Question No., Column B - Mark, Column C - Answer</div>
+    <button onclick="uploadEssayMarkingFile()">Upload Essay File</button>
+    <br><br>
+    <button onclick="compareAnswers()">Save and Compare</button>
+  </section>  <section id="score" class="tab-content">
+    <h3>Score Tab</h3>
+    <table id="score-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Class</th>
+          <th>Arm</th>
+          <th>Objective</th>
+          <th>Essay</th>
+          <th>Total Score</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="score-controls">
+      <button onclick="resetScores()">Reset</button>
+      <button onclick="downloadScores('csv')">Download CSV</button>
+      <button onclick="downloadScores('xlsx')">Download XLSX</button>
+      <button onclick="downloadScores('doc')">Download DOC</button>
+    </div>
+  </section>  <script src="script.js"></script></body>
 </html>
