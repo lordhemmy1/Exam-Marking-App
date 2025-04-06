@@ -1,125 +1,46 @@
 // script.js
 
-const loadSheetJS = () => { if (!window.XLSX) { const script = document.createElement('script'); script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.full.min.js'; script.onload = () => console.log('SheetJS loaded'); document.head.appendChild(script); } };
+// Utility to create form rows dynamically function createObjectiveInputs(formId, prefix, count = 10) { const form = document.getElementById(formId); form.innerHTML = ''; for (let i = 1; i <= count; i++) { const row = document.createElement('div'); row.innerHTML = <label>Q${i}: <input type="text" name="${prefix}-q${i}" /></label>; form.appendChild(row); } }
 
-function showTab(tabId) { document.querySelectorAll('.tab').forEach(tab => tab.style.display = 'none'); document.getElementById(tabId).style.display = 'block'; }
+function createEssayInputs(formId, prefix, count = 5) { const form = document.getElementById(formId); form.innerHTML = ''; for (let i = 1; i <= count; i++) { for (let sub of ['a', 'b', 'c', 'd']) { const row = document.createElement('div'); row.innerHTML = <label>${i}${sub} - Mark: <input type="number" name="${prefix}-q${i}${sub}-mark" style="width: 60px" /></label> <textarea name="${prefix}-q${i}${sub}-ans" placeholder="Answer for ${i}${sub}"></textarea>; form.appendChild(row); } } }
 
-function initObjectiveForm(type) { const form = document.getElementById(${type}-objective-form); form.innerHTML = ''; for (let i = 1; i <= 10; i++) addObjectiveRow(form, i); }
+// Load default inputs createObjectiveInputs('answer-objective-form', 'answer'); createEssayInputs('answer-essay-form', 'answer'); createObjectiveInputs('marking-objective-form', 'marking'); createEssayInputs('marking-essay-form', 'marking');
 
-function addObjectiveRow(form, index) { const input = document.createElement('input'); input.placeholder = Q${index}; input.dataset.qnum = index; input.oninput = () => { if (form.children.length === index) addObjectiveRow(form, index + 1); }; form.appendChild(input); }
+// Placeholder for uploaded and saved data let answerData = {}; let markingData = {}; let scores = [];
 
-function initEssayForm(type) { const form = document.getElementById(${type}-essay-form); form.innerHTML = ''; for (let i = 1; i <= 5; i++) { ['a','b','c','d'].forEach(sub => { addEssayRow(form, ${i}${sub}); }); } }
+function uploadFile(type) { alert(Upload box for ${type} will be implemented with XLSX/CSV support.); // Placeholder: handle file input and parsing here. }
 
-function addEssayRow(form, qnum) { const container = document.createElement('div'); container.className = 'essay-row';
+function saveAnswerData() { const form = document.getElementById('answer-objective-form'); const formEssay = document.getElementById('answer-essay-form'); const objective = {}; const essay = {};
 
-const qInput = document.createElement('input'); qInput.placeholder = Q${qnum}; qInput.dataset.qnum = qnum;
+for (let input of form.elements) { if (input.name && input.value) { objective[input.name] = input.value.trim(); } }
 
-const markInput = document.createElement('input'); markInput.type = 'number'; markInput.placeholder = 'Mark';
+for (let input of formEssay.elements) { if (input.name && input.value) { essay[input.name] = input.value.trim(); } }
 
-const answerInput = document.createElement('textarea'); answerInput.placeholder = 'Answer';
+answerData = { objective, essay }; alert('Answer data saved!'); }
 
-container.appendChild(qInput); container.appendChild(markInput); container.appendChild(answerInput);
+function saveMarkingData() { const form = document.getElementById('marking-objective-form'); const formEssay = document.getElementById('marking-essay-form'); const objective = {}; const essay = {};
 
-form.appendChild(container); }
+for (let input of form.elements) { if (input.name && input.value) { objective[input.name] = input.value.trim(); } }
 
-function uploadObjectiveFile(type) { const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.csv'; input.onchange = async (e) => { const file = e.target.files[0]; const data = await file.arrayBuffer(); const workbook = XLSX.read(data); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+for (let input of formEssay.elements) { if (input.name && input.value) { essay[input.name] = input.value.trim(); } }
 
-const form = document.getElementById(`${type}-objective-form`);
-form.innerHTML = '';
-rows.forEach((row, i) => {
-  const input = document.createElement('input');
-  input.placeholder = `Q${i+1}`;
-  input.value = row[0] || '';
-  form.appendChild(input);
-});
+// Compare and score let scoreObj = 0; let scoreEssay = 0;
 
-}; input.click(); }
+for (let key in objective) { if (answerData.objective?.[key] && answerData.objective[key].toLowerCase() === objective[key].toLowerCase()) { scoreObj++; } }
 
-function uploadEssayFile(type) { const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx,.csv'; input.onchange = async (e) => { const file = e.target.files[0]; const data = await file.arrayBuffer(); const workbook = XLSX.read(data); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+for (let key in essay) { if (key.includes('ans')) { const markKey = key.replace('ans', 'mark'); const ansKey = key; const answerText = (answerData.essay?.[ansKey] || '').toLowerCase(); const studentText = essay[ansKey].toLowerCase(); if (studentText && answerText && studentText.includes(answerText.slice(0, 4))) { scoreEssay += parseInt(answerData.essay[markKey] || 0); } } }
 
-const form = document.getElementById(`${type}-essay-form`);
-form.innerHTML = '';
-rows.forEach((row) => {
-  const container = document.createElement('div');
-  container.className = 'essay-row';
+const total = scoreObj + scoreEssay;
 
-  const qInput = document.createElement('input');
-  qInput.placeholder = `Q${row[0]}`;
-  qInput.value = row[0] || '';
+const student = { name: prompt("Enter Student's Name"), class: prompt("Enter Class"), arm: prompt("Enter Arm"), objective: scoreObj, essay: scoreEssay, total };
 
-  const markInput = document.createElement('input');
-  markInput.type = 'number';
-  markInput.placeholder = 'Mark';
-  markInput.value = row[1] || '';
+scores.push(student); updateScoreTable(); alert('Marking complete and saved!'); }
 
-  const answerInput = document.createElement('textarea');
-  answerInput.placeholder = 'Answer';
-  answerInput.value = row[2] || '';
+function updateScoreTable() { const tbody = document.querySelector('#score-table tbody'); tbody.innerHTML = ''; scores.forEach(s => { const row = <tr> <td>${s.name}</td> <td>${s.class}</td> <td>${s.arm}</td> <td>${s.objective}</td> <td>${s.essay}</td> <td>${s.total}</td> </tr>; tbody.innerHTML += row; }); }
 
-  container.appendChild(qInput);
-  container.appendChild(markInput);
-  container.appendChild(answerInput);
+function resetScores() { if (confirm("Are you sure you want to reset all data?")) { scores = []; updateScoreTable(); } }
 
-  form.appendChild(container);
-});
+function downloadScores(type) { let data = "Student Name,Class,Arm,Objective Score,Essay Score,Total Score\n"; scores.forEach(s => { data += ${s.name},${s.class},${s.arm},${s.objective},${s.essay},${s.total}\n; });
 
-}; input.click(); }
-
-let savedAnswers = { objectives: [], essays: [] };
-
-function saveAnswerData() { const objForm = document.getElementById('answer-objective-form'); savedAnswers.objectives = Array.from(objForm.querySelectorAll('input')).map(input => input.value.trim().toLowerCase());
-
-const essForm = document.getElementById('answer-essay-form'); savedAnswers.essays = Array.from(essForm.querySelectorAll('.essay-row')).map(row => { const inputs = row.querySelectorAll('input, textarea'); return { question: inputs[0].value.trim().toLowerCase(), mark: parseInt(inputs[1].value.trim()) || 0, answer: inputs[2].value.trim().toLowerCase() }; }); alert('Answer data saved for comparison.'); }
-
-function saveMarkingData() { const studentName = document.getElementById('student-name').value.trim(); const studentClass = document.getElementById('student-class').value.trim(); const studentArm = document.getElementById('student-arm').value.trim();
-
-const objForm = document.getElementById('marking-objective-form'); const stuAnswers = Array.from(objForm.querySelectorAll('input')).map(input => input.value.trim().toLowerCase());
-
-let objScore = 0; stuAnswers.forEach((ans, idx) => { if (ans === savedAnswers.objectives[idx]) objScore++; });
-
-const essForm = document.getElementById('marking-essay-form'); const stuEssays = Array.from(essForm.querySelectorAll('.essay-row')).map(row => { const inputs = row.querySelectorAll('input, textarea'); return { question: inputs[0].value.trim().toLowerCase(), mark: parseInt(inputs[1].value.trim()) || 0, answer: inputs[2].value.trim().toLowerCase() }; });
-
-let essScore = 0; stuEssays.forEach(stu => { const model = savedAnswers.essays.find(e => e.question === stu.question); if (model && stu.answer && model.answer) { const keywords = model.answer.split(/\s+/); const matched = keywords.filter(word => stu.answer.includes(word)); const ratio = matched.length / keywords.length; if (ratio >= 0.6) essScore += model.mark; } });
-
-const total = objScore + essScore;
-
-const tbody = document.getElementById('score-body'); const row = document.createElement('tr'); row.innerHTML = <td>${studentName || 'Unknown'}</td> <td>${studentClass || 'N/A'}</td> <td>${studentArm || '-'}</td> <td>${objScore}</td> <td>${essScore}</td> <td>${total}</td>; tbody.appendChild(row); alert('Scores generated and saved.'); }
-
-function downloadScores(format) { const table = document.getElementById('score-table'); const wb = XLSX.utils.book_new(); const ws = XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb, ws, 'Scores');
-
-if (format === 'xlsx') { XLSX.writeFile(wb, 'scores.xlsx'); } else if (format === 'csv') { XLSX.writeFile(wb, 'scores.csv'); } else if (format === 'doc') { let html = '<table>' + table.innerHTML + '</table>'; const blob = new Blob(['\uFEFF' + html], { type: 'application/msword' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'scores.doc'; link.click(); } }
-
-function resetScores() { document.getElementById('score-body').innerHTML = ''; alert('Scores reset.'); }
-
-window.onload = () => { loadSheetJS(); initObjectiveForm('answer'); initObjectiveForm('marking'); initEssayForm('answer'); initEssayForm('marking'); 
-                      
-                      document.addEventListener('DOMContentLoaded', () => {
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  const tabs = document.querySelectorAll('.tab');
-
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      // Hide all tabs
-      tabs.forEach(tab => tab.style.display = 'none');
-
-      // Remove active class from all buttons
-      tabButtons.forEach(b => b.classList.remove('active'));
-
-      // Show the selected tab
-      const tabId = btn.getAttribute('data-tab');
-      document.getElementById(tabId).style.display = 'block';
-
-      // Highlight active tab
-      btn.classList.add('active');
-    });
-  });
-
-  // Optionally activate the first tab by default
-  if (tabButtons.length > 0) {
-    tabButtons[0].click();
-  }
-});
-                      };
-
-                            
+const blob = new Blob([data], { type: "text/csv;charset=utf-8;" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = scores.${type}; a.click(); URL.revokeObjectURL(url); }
 
