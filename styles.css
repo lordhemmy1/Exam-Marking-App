@@ -1,46 +1,141 @@
-/* styles.css */ body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-
-header { background: #007bff; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold; }
-
-nav { display: flex; justify-content: center; background: #e0e0e0; border-bottom: 1px solid #ccc; }
-
-.tab-button { padding: 1rem 2rem; cursor: pointer; background: #ccc; border: none; outline: none; margin: 0 0.25rem; font-size: 1rem; transition: background 0.3s; }
-
-.tab-button.active { background: #007bff; color: white; font-weight: bold; }
-
-.tab-content { display: none; padding: 2rem; background: white; border: 2px solid #007bff; margin: 2rem; border-radius: 8px; }
-
-.tab-content.active { display: block; }
-
-h3 { margin-bottom: 1rem; color: #333; }
-
-form { margin-bottom: 1.5rem; }
-
-form div { margin-bottom: 1rem; }
-
-label { display: inline-block; min-width: 60px; font-weight: 500; margin-right: 10px; }
-
-input[type="text"], input[type="number"], textarea { padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; width: 300px; max-width: 100%; }
-
-textarea { width: 100%; height: 60px; }
-
-button { padding: 0.5rem 1.25rem; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
-
-button:hover { background: #0056b3; }
-
-.upload-note { font-size: 0.9rem; color: #555; margin-bottom: 1rem; font-style: italic; }
-
-#score-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-
-#score-table th, #score-table td { padding: 0.75rem; border: 1px solid #ccc; text-align: center; }
-
-#score-table th { background: #007bff; color: white; font-weight: bold; }
-
-#score-table tbody tr:nth-child(even) { background: #f2f2f2; }
-
-.score-controls { margin-top: 2rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-
-.score-controls button { flex: 1; min-width: 150px; }
-
-@media screen and (max-width: 600px) { nav { flex-direction: column; } .tab-button { width: 100%; text-align: center; } input[type="text"], input[type="number"], textarea { width: 100%; } .score-controls { flex-direction: column; } }
-
+/* Basic layout and responsive styling */
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+header {
+  background: #007bff;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+nav {
+  display: flex;
+  justify-content: center;
+  background: #e0e0e0;
+  border-bottom: 1px solid #ccc;
+}
+.tab-button {
+  padding: 1rem 2rem;
+  cursor: pointer;
+  background: #ccc;
+  border: none;
+  outline: none;
+  margin: 0 0.25rem;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+.tab-button.active {
+  background: #007bff;
+  color: white;
+  font-weight: bold;
+}
+.tab-content {
+  display: none;
+  padding: 2rem;
+  background: white;
+  border: 2px solid #007bff;
+  margin: 2rem;
+  border-radius: 8px;
+}
+.tab-content.active {
+  display: block;
+}
+h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+form {
+  margin-bottom: 1.5rem;
+}
+form div {
+  margin-bottom: 1rem;
+}
+label {
+  display: inline-block;
+  min-width: 60px;
+  font-weight: 500;
+  margin-right: 10px;
+}
+input[type="text"],
+input[type="number"],
+textarea {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 300px;
+  max-width: 100%;
+}
+textarea {
+  width: 100%;
+  height: 60px;
+}
+button {
+  padding: 0.5rem 1.25rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+button:hover {
+  background: #0056b3;
+}
+.upload-note {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+#score-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+}
+#score-table th,
+#score-table td {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+#score-table th {
+  background: #007bff;
+  color: white;
+  font-weight: bold;
+}
+#score-table tbody tr:nth-child(even) {
+  background: #f2f2f2;
+}
+.score-controls {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.score-controls button {
+  flex: 1;
+  min-width: 150px;
+}
+@media screen and (max-width: 600px) {
+  nav {
+    flex-direction: column;
+  }
+  .tab-button {
+    width: 100%;
+    text-align: center;
+  }
+  input[type="text"],
+  input[type="number"],
+  textarea {
+    width: 100%;
+  }
+  .score-controls {
+    flex-direction: column;
+  }
+}
