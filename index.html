@@ -14,11 +14,12 @@
   <header>Examination Marking App</header>
   <nav>
     <button class="tab-button active" data-tab="answer">Answer Tab</button>
+    <button class="tab-button" data-tab="studentDB">Students Database</button>
     <button class="tab-button" data-tab="marking">Marking Tab</button>
     <button class="tab-button" data-tab="score">Score Tab</button>
   </nav>
 
-  <!-- Answer Tab -->
+  <!-- Answer Tab (unchanged) -->
   <section id="answer" class="tab-content active">
     <h3>Objective Answer Form</h3>
     <form id="objective-answer-form"></form>
@@ -37,29 +38,81 @@
     <button onclick="saveAnswerData()">Save Answer Data</button>
   </section>
 
+  <!-- Students Database Tab -->
+  <section id="studentDB" class="tab-content">
+    <h3>Students Database</h3>
+    <!-- Student Information -->
+    <form id="student-db-form">
+      <fieldset>
+        <legend>Student Information</legend>
+        <div>
+          <label>Name:</label>
+          <input type="text" id="db-student-name">
+        </div>
+        <div>
+          <label>Class:</label>
+          <input type="text" id="db-student-class">
+        </div>
+        <div>
+          <label>Arm:</label>
+          <input type="text" id="db-student-arm">
+        </div>
+      </fieldset>
+      <!-- Objective Answer -->
+      <fieldset>
+        <legend>Objective Answer</legend>
+        <textarea id="db-objective-answer" placeholder="Enter the student's objective answer"></textarea>
+      </fieldset>
+      <!-- Essay Answer -->
+      <fieldset id="db-essay-fieldset">
+        <legend>Essay Answers</legend>
+        <div id="db-essay-form">
+          <!-- One dynamic essay answer group is preloaded -->
+          <div class="essay-group" data-index="1">
+            <label>Q1:</label>
+            <input type="text" placeholder="Question No" class="db-essay-qn">
+            <textarea placeholder="Answer" class="db-essay-ans"></textarea>
+            <!-- Accept picture as file input -->
+            <input type="file" accept="image/png,image/jpeg,image/jpg" class="db-essay-img">
+            <div class="essay-addition">
+              <button type="button" class="add-essay-btn">Continue</button>
+              <button type="button" class="decline-essay-btn">Decline</button>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+      <br>
+      <button type="button" onclick="saveStudentData()">Save Student</button>
+    </form>
+    <!-- Display saved student reference -->
+    <h4>Saved Students</h4>
+    <div id="student-db-reference"></div>
+  </section>
+
   <!-- Marking Tab -->
   <section id="marking" class="tab-content">
     <h3>Student Information</h3>
     <form id="student-info-form">
-      <div><label>Name:</label><input type="text" id="student-name"></div>
-      <div><label>Class:</label><input type="text" id="student-class"></div>
-      <div><label>Arm:</label><input type="text" id="student-arm"></div>
+      <div>
+        <label>Name:</label>
+        <input type="text" id="student-name" onblur="populateStudentData()">
+      </div>
+      <div>
+        <label>Class:</label>
+        <input type="text" id="student-class" onblur="populateStudentData()">
+      </div>
+      <div>
+        <label>Arm:</label>
+        <input type="text" id="student-arm" onblur="populateStudentData()">
+      </div>
     </form>
     <h3>Objective Marking Form</h3>
+    <!-- This form auto-populates from the Students Database -->
     <form id="objective-marking-form"></form>
-    <div class="upload-note">
-      Expected file upload format: Column A – Question No.; Column B – Student Answer.
-    </div>
-    <!-- Allow images too -->
-    <input type="file" id="upload-objective-marking" accept=".xlsx,.csv,image/png,image/jpeg,image/jpg">
     <hr>
     <h3>Essay Marking Form</h3>
+    <!-- This form auto-populates from the Students Database -->
     <form id="essay-marking-form"></form>
-    <div class="upload-note">
-      Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.
-    </div>
-    <!-- Allow images too -->
-    <input type="file" id="upload-essay-marking" accept=".xlsx,.csv,image/png,image/jpeg,image/jpg">
     <br><br>
     <button onclick="markAnswers()">Mark</button>
     <div id="marking-notification"></div>
@@ -85,6 +138,7 @@
             <th>Correct Answer</th>
             <th>Student Answer</th>
             <th>Remark</th>
+            <th>Marking Action</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -118,4 +172,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+  </html>
