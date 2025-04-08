@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exam Marking App</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- Include SheetJS (XLSX) library -->
+  <!-- Include SheetJS library for XLSX/CSV handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Include Tesseract.js for OCR (image processing) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
 </head>
 <body>
   <header>Examination Marking App</header>
@@ -21,14 +23,14 @@
     <h3>Objective Answer Form</h3>
     <form id="objective-answer-form"></form>
     <div class="upload-note">
-      Expected format for file upload: Column A – Question No.; Column B – Correct Answer.
+      Expected file upload format: Column A – Question No.; Column B – Correct Answer.
     </div>
     <input type="file" id="upload-objective-answer" accept=".xlsx,.csv">
     <br><br>
     <h3>Essay Answer Form</h3>
     <form id="essay-answer-form"></form>
     <div class="upload-note">
-      Expected format for file upload: Column A – Question No.; Column B – Mark; Column C – Answer.
+      Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.
     </div>
     <input type="file" id="upload-essay-answer" accept=".xlsx,.csv">
     <br><br>
@@ -46,20 +48,47 @@
     <h3>Objective Marking Form</h3>
     <form id="objective-marking-form"></form>
     <div class="upload-note">
-      Expected format for file upload: Column A – Question No.; Column B – Student Answer.
+      Expected file upload format: Column A – Question No.; Column B – Student Answer.
     </div>
-    <input type="file" id="upload-objective-marking" accept=".xlsx,.csv">
+    <!-- Allow images too -->
+    <input type="file" id="upload-objective-marking" accept=".xlsx,.csv,image/png,image/jpeg,image/jpg">
     <hr>
     <h3>Essay Marking Form</h3>
     <form id="essay-marking-form"></form>
     <div class="upload-note">
-      Expected format for file upload: Column A – Question No.; Column B – Mark; Column C – Answer.
+      Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.
     </div>
-    <input type="file" id="upload-essay-marking" accept=".xlsx,.csv">
+    <!-- Allow images too -->
+    <input type="file" id="upload-essay-marking" accept=".xlsx,.csv,image/png,image/jpeg,image/jpg">
     <br><br>
-    <button onclick="compareAnswers()">Save and Compare</button>
-    <div id="marking-score-display">
-      <!-- Display computed score here (Name, Class, Arm, Objective Score, Essay Score, Total Score) -->
+    <button onclick="markAnswers()">Mark</button>
+    <div id="marking-notification"></div>
+    <!-- Detailed Marking Results -->
+    <div id="detailed-marking-result">
+      <h4>Objective Marking Details</h4>
+      <table id="objective-detail-table">
+        <thead>
+          <tr>
+            <th>Q No.</th>
+            <th>Correct Answer</th>
+            <th>Student Answer</th>
+            <th>Remark</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h4>Essay Marking Details</h4>
+      <table id="essay-detail-table">
+        <thead>
+          <tr>
+            <th>Q No.</th>
+            <th>Correct Answer</th>
+            <th>Student Answer</th>
+            <th>Remark</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 
@@ -89,4 +118,4 @@
 
   <script src="script.js"></script>
 </body>
-        </html>
+</html>
