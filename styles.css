@@ -1,4 +1,4 @@
-/* Basic layout and responsive styling */
+/* Basic styling */
 body {
   font-family: Arial, sans-serif;
   background: #f4f4f4;
@@ -45,7 +45,7 @@ nav {
 .tab-content.active {
   display: block;
 }
-h3 {
+h3, h4 {
   margin-bottom: 1rem;
   color: #333;
 }
@@ -92,6 +92,21 @@ button:hover {
   margin-bottom: 1rem;
   font-style: italic;
 }
+/* Two-column layout for objective forms */
+.two-col-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1rem;
+}
+.two-col-form div {
+  display: flex;
+  align-items: center;
+}
+.two-col-form label {
+  width: 40px;
+  margin-right: 5px;
+}
+/* Score Table */
 #score-table {
   width: 100%;
   border-collapse: collapse;
