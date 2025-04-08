@@ -9,25 +9,25 @@ document.querySelectorAll('.tab-button').forEach(btn => {
 });
 
 // --- Global Data Structures ---
-const objectiveLimit = 100; // total allowed, but we default to 50 displayed
+const objectiveLimit = 100; // Total allowed, but default 50 displayed for answer/marking forms
 const essayLimit = 20;
-let answerData = { objectives: {}, essays: {} }; // Answer tab data (teacher input)
-let studentData = []; // Array of student records
+let answerData = { objectives: {}, essays: {} }; // Teacher input from Answer Tab
+let studentData = [];  // Array for marking records (for Score Tab)
+let studentDB = [];    // Local database for students (max 400 records)
 
 // --- Notification Function ---
 function notify(message) {
   const note = document.getElementById('marking-notification');
-  note.innerText = message;
+  if (note) note.innerText = message;
 }
 
 // --- Similarity Calculation for Essay Matching (Simple Implementation) ---
 function calculateSimilarity(str1, str2) {
-  // Convert to lower-case and split into tokens
+  // Lower-case and split into tokens
   let tokens1 = str1.toLowerCase().split(/\s+/);
   let tokens2 = str2.toLowerCase().split(/\s+/);
   let common = tokens1.filter(token => tokens2.includes(token));
-  let similarity = (common.length / tokens1.length) * 100;
-  return similarity;
+  return (common.length / tokens1.length) * 100;
 }
 
 // --- Dynamic Form Creation ---
@@ -62,14 +62,15 @@ function createEssayForm(container, prefix, count = essayLimit) {
 function saveAnswerData() {
   answerData.objectives = {};
   answerData.essays = {};
-  // Save objective answers; use question number from input id
+  // Save objective answers (use question number extracted from input id)
   for (let i = 1; i <= 50; i++) {
     const input = document.getElementById(`objective-answer-${i}`);
     if (input && input.value.trim()) {
+      // Extract question number from id (format: "objective-answer-{qNo}")
       answerData.objectives[input.id.split('-')[2]] = input.value.trim();
     }
   }
-  // Save essay answers; key by question number entered in the form
+  // Save essay answers; key using the question number entered in the form
   for (let i = 1; i <= essayLimit; i++) {
     const qn = document.getElementById(`essay-answer-qn-${i}`);
     const mark = document.getElementById(`essay-answer-mark-${i}`);
@@ -94,7 +95,6 @@ function markAnswers() {
     const cls = document.getElementById('student-class').value;
     const arm = document.getElementById('student-arm').value;
     let scoreObj = 0, scoreEssay = 0;
-    // For detailed result tables:
     let objDetails = [];
     let essayDetails = [];
   
@@ -128,16 +128,12 @@ function markAnswers() {
     }
   
     const total = scoreObj + scoreEssay;
-    // Save student record (make sure addition is correct)
     studentData.push({ name, class: cls, arm, scoreObj, scoreEssay, total });
     updateScoreTable();
-    // Display detailed marking results in separate tables
     updateDetailTables(objDetails, essayDetails);
     notify('Getting results...');
-
     setTimeout(() => {
       notify('Marking complete.');
-      // Scroll to Score Tab if needed or simply inform the user
     }, 500);
   }, 500);
 }
@@ -231,14 +227,12 @@ function downloadFile(filename, content) {
 
 // --- File Upload Handling with SheetJS ---
 // This function handles both XLSX/CSV files and image files.
-// For images, it uses Tesseract.js to extract text.
-// For objective and essay, it reads the first column as the question number.
+// For images, it uses Tesseract.js to extract text and populate the marking fields.
 function handleFileUpload(event, type, prefix) {
   const file = event.target.files[0];
   if (!file) return;
-  // Check if file is an image by type
+  // Check if file is an image
   if (file.type.startsWith('image/')) {
-    // Pass file to the image handler
     handleImageUpload(file, type, prefix);
     return;
   }
@@ -252,10 +246,9 @@ function handleFileUpload(event, type, prefix) {
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     if (type === 'objective') {
       jsonData.forEach(row => {
-        // row[0]: question number; row[1]: answer
+        // Row[0]: question number; Row[1]: answer.
         if (row[0] && row[1]) {
           let input = document.getElementById(`${prefix}-${row[0]}`);
-          // If input not found, optionally add new row
           if (!input) {
             let container = document.getElementById(prefix + (prefix.includes('objective-answer') ? '-form' : '-marking-form'));
             const div = document.createElement('div');
@@ -269,7 +262,7 @@ function handleFileUpload(event, type, prefix) {
       });
     } else if (type === 'essay') {
       jsonData.forEach((row, idx) => {
-        // row[0]: question no, row[1]: mark, row[2]: answer
+        // Row[0]: question no; Row[1]: mark; Row[2]: answer.
         if (row[0] && row[1] && row[2]) {
           let qn = document.getElementById(`${prefix}-qn-${idx + 1}`);
           let mark = document.getElementById(`${prefix}-mark-${idx + 1}`);
@@ -287,19 +280,18 @@ function handleFileUpload(event, type, prefix) {
 }
 
 // --- Handle Image Upload using Tesseract.js ---
-// Updated to distinguish between objective and essay marking in the Marking Tab.
+// Updated for marking tab: Extract text for objective and essay marking.
 function handleImageUpload(file, type, prefix) {
   notify('Processing image via OCR...');
   Tesseract.recognize(file, 'eng')
     .then(({ data: { text } }) => {
+      // Assume OCR text is structured per line: "Q#: Answer"
       const lines = text.split('\n').map(l => l.trim()).filter(l => l);
       lines.forEach(line => {
-        // Assuming each line is in the format "Q#: Answer" or similar
         const parts = line.split(/[:\-]/);
         if (parts.length >= 2) {
           const qNo = parts[0].replace(/[^0-9]/g, '');
           const extracted = parts.slice(1).join(':').trim();
-          // If processing essay marking, populate the answer field
           if (prefix.includes('essay-marking')) {
             let input = document.getElementById(`${prefix}-ans-${qNo}`);
             if (input) {
@@ -316,7 +308,6 @@ function handleImageUpload(file, type, prefix) {
               container.appendChild(div);
             }
           } else {
-            // Else, for objective marking (or other), populate the standard input field
             let input = document.getElementById(`${prefix}-${qNo}`);
             if (input) {
               input.value = extracted;
@@ -350,6 +341,170 @@ function setupUploadListeners() {
     (e) => handleFileUpload(e, 'essay', 'essay-marking'));
 }
 
+// --- New Functions for Students Database Tab ---
+// Save student data into local database
+function saveStudentData() {
+  const name = document.getElementById('db-student-name').value.trim();
+  const cls = document.getElementById('db-student-class').value.trim();
+  const arm = document.getElementById('db-student-arm').value.trim();
+  const objAnswer = document.getElementById('db-objective-answer').value.trim();
+  // Collect dynamic essay answers from each essay group
+  const essayGroups = document.querySelectorAll('#db-essay-form .essay-group');
+  let essayAnswers = [];
+  essayGroups.forEach(group => {
+    const qn = group.querySelector('.db-essay-qn').value.trim();
+    const ans = group.querySelector('.db-essay-ans').value.trim();
+    // If an image file is provided, store its filename (as a placeholder)
+    const imgInput = group.querySelector('.db-essay-img');
+    let imgFile = (imgInput && imgInput.files[0]) ? imgInput.files[0].name : '';
+    if (qn && ans) {
+      essayAnswers.push({ qNo: qn, answer: ans, image: imgFile });
+    }
+  });
+  
+  const studentRecord = { name, class: cls, arm, objAnswer, essayAnswers };
+  studentDB.push(studentRecord);
+  // Limit to maximum 400 records
+  if (studentDB.length > 400) {
+    studentDB.shift();
+  }
+  
+  // Reset the form fields for new student entry
+  document.getElementById('db-student-name').value = '';
+  document.getElementById('db-student-class').value = '';
+  document.getElementById('db-student-arm').value = '';
+  document.getElementById('db-objective-answer').value = '';
+  document.getElementById('db-essay-form').innerHTML = '';
+  addNewEssayGroup();
+  updateStudentDBReference();
+}
+
+// Update the Saved Students reference display
+function updateStudentDBReference() {
+  const container = document.getElementById('student-db-reference');
+  container.innerHTML = '';
+  studentDB.forEach((student, index) => {
+    const div = document.createElement('div');
+    div.innerText = `${index + 1}. ${student.name} (${student.class}, ${student.arm})`;
+    container.appendChild(div);
+  });
+}
+
+// Dynamic creation of a new essay group in Students Database tab
+function addNewEssayGroup() {
+  const container = document.getElementById('db-essay-form');
+  const index = container.children.length + 1;
+  if (index > essayLimit) return;
+  const div = document.createElement('div');
+  div.classList.add('essay-group');
+  div.setAttribute('data-index', index);
+  div.innerHTML = `
+    <label>Q${index}:</label>
+    <input type="text" placeholder="Question No" class="db-essay-qn">
+    <textarea placeholder="Answer" class="db-essay-ans"></textarea>
+    <input type="file" accept="image/png,image/jpeg,image/jpg" class="db-essay-img">
+    <div class="essay-addition">
+      <button type="button" class="add-essay-btn">Continue</button>
+      <button type="button" class="decline-essay-btn">Decline</button>
+    </div>
+  `;
+  container.appendChild(div);
+  div.querySelector('.add-essay-btn').addEventListener('click', () => {
+    addNewEssayGroup();
+  });
+  div.querySelector('.decline-essay-btn').addEventListener('click', () => {
+    // No action for decline
+  });
+}
+
+// Initialize the Students Database essay form on load
+function initStudentDBForm() {
+  document.getElementById('db-essay-form').innerHTML = '';
+  addNewEssayGroup();
+}
+
+// --- Modify Marking Tab: Auto-populate from Students Database ---
+// When student info is entered in the Marking Tab, auto-populate the objective and essay forms.
+function populateStudentData() {
+  const name = document.getElementById('student-name').value.trim();
+  const cls = document.getElementById('student-class').value.trim();
+  const arm = document.getElementById('student-arm').value.trim();
+  const student = studentDB.find(s =>
+    s.name.toLowerCase() === name.toLowerCase() &&
+    s.class.toLowerCase() === cls.toLowerCase() &&
+    s.arm.toLowerCase() === arm.toLowerCase()
+  );
+  if (student) {
+    // Populate objective marking form: assume objective answer separated by newlines.
+    const objFormContainer = document.getElementById('objective-marking-form');
+    objFormContainer.innerHTML = '';
+    let answers = student.objAnswer.split('\n');
+    answers.forEach((ans, idx) => {
+      const div = document.createElement('div');
+      div.innerHTML = `<label>${idx+1}.</label>
+      <input type="text" id="objective-marking-${idx+1}" value="${ans.trim()}">`;
+      objFormContainer.appendChild(div);
+    });
+    // Populate essay marking form from student.essayAnswers
+    const essayFormContainer = document.getElementById('essay-marking-form');
+    essayFormContainer.innerHTML = '';
+    student.essayAnswers.forEach((ea, idx) => {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <label>Q${ea.qNo}:</label>
+        <input type="text" id="essay-marking-qn-${idx+1}" value="${ea.qNo}" readonly>
+        <input type="number" id="essay-marking-mark-${idx+1}" placeholder="Mark" readonly>
+        <textarea id="essay-marking-ans-${idx+1}" readonly>${ea.answer}</textarea>
+        ${ea.image ? `<div class="essay-image">Image: ${ea.image}</div>` : ''}
+        <div class="mark-actions">
+          <button type="button" onclick="assignMark(${idx+1}, 'correct')">Correct</button>
+          <button type="button" onclick="assignMark(${idx+1}, 'incorrect')">Incorrect</button>
+          <button type="button" onclick="assignMark(${idx+1}, 'custom', ${idx+1})">Custom Mark</button>
+          <input type="number" id="custom-mark-${idx+1}" style="display:none;" placeholder="Enter mark">
+          <button type="button" id="apply-custom-${idx+1}" style="display:none;" onclick="applyCustomMark(${idx+1})">Done</button>
+        </div>
+      `;
+      essayFormContainer.appendChild(div);
+    });
+  }
+}
+
+// --- Functions for marking actions in Essay Marking ---
+function assignMark(idx, type, customIdx) {
+  const markInput = document.getElementById(`essay-marking-mark-${idx}`);
+  if (type === 'correct') {
+    const qnInput = document.getElementById(`essay-marking-qn-${idx}`);
+    const answerKey = qnInput ? qnInput.value.trim() : '';
+    const model = answerData.essays[answerKey];
+    if (model) {
+      markInput.value = model.mark;
+    }
+  } else if (type === 'incorrect') {
+    markInput.value = 0;
+  } else if (type === 'custom') {
+    document.getElementById(`custom-mark-${customIdx}`).style.display = 'inline-block';
+    document.getElementById(`apply-custom-${customIdx}`).style.display = 'inline-block';
+  }
+}
+function applyCustomMark(idx) {
+  const customMark = document.getElementById(`custom-mark-${idx}`).value;
+  document.getElementById(`essay-marking-mark-${idx}`).value = customMark;
+  document.getElementById(`custom-mark-${idx}`).style.display = 'none';
+  document.getElementById(`apply-custom-${idx}`).style.display = 'none';
+}
+
+// --- Attach File Upload Listeners (Existing) ---
+function setupUploadListeners() {
+  document.getElementById('upload-objective-answer').addEventListener('change',
+    (e) => handleFileUpload(e, 'objective', 'objective-answer'));
+  document.getElementById('upload-essay-answer').addEventListener('change',
+    (e) => handleFileUpload(e, 'essay', 'essay-answer'));
+  document.getElementById('upload-objective-marking').addEventListener('change',
+    (e) => handleFileUpload(e, 'objective', 'objective-marking'));
+  document.getElementById('upload-essay-marking').addEventListener('change',
+    (e) => handleFileUpload(e, 'essay', 'essay-marking'));
+}
+
 // --- Initialize Forms and Listeners on Page Load ---
 window.onload = () => {
   createObjectiveFormTwoCol(document.getElementById('objective-answer-form'), 'objective-answer');
@@ -357,4 +512,5 @@ window.onload = () => {
   createEssayForm(document.getElementById('essay-answer-form'), 'essay-answer');
   createEssayForm(document.getElementById('essay-marking-form'), 'essay-marking');
   setupUploadListeners();
+  initStudentDBForm();
 };
