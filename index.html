@@ -1,9 +1,12 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exam Marking App</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- Include SheetJS (XLSX) library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
   <header>Examination Marking App</header>
@@ -11,37 +14,57 @@
     <button class="tab-button active" data-tab="answer">Answer Tab</button>
     <button class="tab-button" data-tab="marking">Marking Tab</button>
     <button class="tab-button" data-tab="score">Score Tab</button>
-  </nav>  <section id="answer" class="tab-content active">
+  </nav>
+
+  <!-- Answer Tab -->
+  <section id="answer" class="tab-content active">
     <h3>Objective Answer Form</h3>
     <form id="objective-answer-form"></form>
-    <div class="upload-note">Upload file format: Column A - Question No., Column B - Correct Answer</div>
-    <button onclick="uploadObjectiveAnswerFile()">Upload Objective File</button>
-    <hr>
+    <div class="upload-note">
+      Expected format for file upload: Column A – Question No.; Column B – Correct Answer.
+    </div>
+    <input type="file" id="upload-objective-answer" accept=".xlsx,.csv">
+    <br><br>
     <h3>Essay Answer Form</h3>
     <form id="essay-answer-form"></form>
-    <div class="upload-note">Upload format: Column A - Question No., Column B - Mark, Column C - Answer</div>
-    <button onclick="uploadEssayAnswerFile()">Upload Essay File</button>
+    <div class="upload-note">
+      Expected format for file upload: Column A – Question No.; Column B – Mark; Column C – Answer.
+    </div>
+    <input type="file" id="upload-essay-answer" accept=".xlsx,.csv">
     <br><br>
     <button onclick="saveAnswerData()">Save Answer Data</button>
-  </section>  <section id="marking" class="tab-content">
+  </section>
+
+  <!-- Marking Tab -->
+  <section id="marking" class="tab-content">
     <h3>Student Information</h3>
     <form id="student-info-form">
       <div><label>Name:</label><input type="text" id="student-name"></div>
       <div><label>Class:</label><input type="text" id="student-class"></div>
       <div><label>Arm:</label><input type="text" id="student-arm"></div>
     </form>
-    <h3>Objective Answer Form</h3>
+    <h3>Objective Marking Form</h3>
     <form id="objective-marking-form"></form>
-    <div class="upload-note">Upload file format: Column A - Question No., Column B - Answer</div>
-    <button onclick="uploadObjectiveMarkingFile()">Upload Objective File</button>
+    <div class="upload-note">
+      Expected format for file upload: Column A – Question No.; Column B – Student Answer.
+    </div>
+    <input type="file" id="upload-objective-marking" accept=".xlsx,.csv">
     <hr>
-    <h3>Essay Answer Form</h3>
+    <h3>Essay Marking Form</h3>
     <form id="essay-marking-form"></form>
-    <div class="upload-note">Upload format: Column A - Question No., Column B - Mark, Column C - Answer</div>
-    <button onclick="uploadEssayMarkingFile()">Upload Essay File</button>
+    <div class="upload-note">
+      Expected format for file upload: Column A – Question No.; Column B – Mark; Column C – Answer.
+    </div>
+    <input type="file" id="upload-essay-marking" accept=".xlsx,.csv">
     <br><br>
     <button onclick="compareAnswers()">Save and Compare</button>
-  </section>  <section id="score" class="tab-content">
+    <div id="marking-score-display">
+      <!-- Display computed score here (Name, Class, Arm, Objective Score, Essay Score, Total Score) -->
+    </div>
+  </section>
+
+  <!-- Score Tab -->
+  <section id="score" class="tab-content">
     <h3>Score Tab</h3>
     <table id="score-table">
       <thead>
@@ -62,5 +85,8 @@
       <button onclick="downloadScores('xlsx')">Download XLSX</button>
       <button onclick="downloadScores('doc')">Download DOC</button>
     </div>
-  </section>  <script src="script.js"></script></body>
-</html>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+        </html>
