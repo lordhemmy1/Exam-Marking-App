@@ -11,9 +11,9 @@ document.querySelectorAll('.tab-button').forEach(btn => {
 // --- Global Data Structures ---
 const objectiveLimit = 100; // total allowed; default display is 50 rows for objective forms
 const essayLimit = 20;
-let answerData = { objectives: {}, essays: {} }; // Data saved in Answer Tab (teacher input)
-let studentData = [];  // For marking records (used in Score Tab)
-let studentDB = [];    // Local database for up to 400 students
+let answerData = { objectives: {}, essays: {} }; // Data from Answer Tab (teacher input)
+let studentData = [];  // Array for marking records (displayed in Score Tab)
+let studentDB = [];    // Local database for students (max 400 records)
 
 // --- Notification Function ---
 function notify(message) {
@@ -61,12 +61,14 @@ function createEssayForm(container, prefix, count = essayLimit) {
 function saveAnswerData() {
   answerData.objectives = {};
   answerData.essays = {};
+  // Save objective answers (use question number from input id)
   for (let i = 1; i <= 50; i++) {
     const input = document.getElementById(`objective-answer-${i}`);
     if (input && input.value.trim()) {
       answerData.objectives[input.id.split('-')[2]] = input.value.trim();
     }
   }
+  // Save essay answers, keyed by question number entered in the form.
   for (let i = 1; i <= essayLimit; i++) {
     const qn = document.getElementById(`essay-answer-qn-${i}`);
     const mark = document.getElementById(`essay-answer-mark-${i}`);
@@ -221,7 +223,6 @@ function downloadFile(filename, content) {
 }
 
 // --- File Upload Handling with SheetJS ---
-// Handles XLSX/CSV files and image files for marking fields.
 function handleFileUpload(event, type, prefix) {
   const file = event.target.files[0];
   if (!file) return;
@@ -270,7 +271,6 @@ function handleFileUpload(event, type, prefix) {
 }
 
 // --- Handle Image Upload using Tesseract.js ---
-// Updated to extract text for marking fields from an image.
 function handleImageUpload(file, type, prefix) {
   notify('Processing image via OCR...');
   Tesseract.recognize(file, 'eng')
@@ -331,7 +331,7 @@ function setupUploadListeners() {
 }
 
 // --- New Functions for Students Database Tab ---
-// Save student info into the local database.
+// Save student information and update reference display.
 function saveStudentData() {
   const name = document.getElementById('db-student-name').value.trim();
   const cls = document.getElementById('db-student-class').value.trim();
@@ -353,9 +353,8 @@ function saveStudentData() {
   if (studentDB.length > 400) {
     studentDB.shift();
   }
-  // Display saved student info as reference.
   updateStudentDBReference();
-  // Reset the Students Database form.
+  // Reset the Students Database form for new entry.
   document.getElementById('db-student-name').value = '';
   document.getElementById('db-student-class').value = '';
   document.getElementById('db-student-arm').value = '';
@@ -365,7 +364,7 @@ function saveStudentData() {
   alert('Student data saved.');
 }
 
-// Update the reference display of saved student data.
+// Update the displayed student reference list.
 function updateStudentDBReference() {
   const container = document.getElementById('student-db-reference');
   container.innerHTML = '';
@@ -376,8 +375,8 @@ function updateStudentDBReference() {
   });
 }
 
-// Create a new essay group in the Students Database form.
-// The "Continue" button adds a new group; the "Delete" button removes the group.
+// Create a new essay group for the Students Database tab.
+// Only a "Continue" button and a "Delete" button are provided.
 function addNewEssayGroup() {
   const container = document.getElementById('db-essay-form');
   const index = container.children.length + 1;
@@ -404,14 +403,13 @@ function addNewEssayGroup() {
   });
 }
 
-// Initialize the Students Database essay form on load.
+// Initialize the Students Database essay form on page load.
 function initStudentDBForm() {
   document.getElementById('db-essay-form').innerHTML = '';
   addNewEssayGroup();
 }
 
 // --- Modify Marking Tab: Auto-populate from Students Database ---
-// When teacher inputs student info (Name, Class, Arm) in Marking Tab, auto-populate the corresponding answers.
 function populateStudentData() {
   const name = document.getElementById('student-name').value.trim();
   const cls = document.getElementById('student-class').value.trim();
@@ -432,26 +430,24 @@ function populateStudentData() {
       <input type="text" id="objective-marking-${idx+1}" value="${ans.trim()}">`;
       objFormContainer.appendChild(div);
     });
-    // Populate essay marking form as a table with three columns.
+    // Populate essay marking form as a three-column layout.
     const essayFormContainer = document.getElementById('essay-marking-form');
     essayFormContainer.innerHTML = '';
     student.essayAnswers.forEach((ea, idx) => {
-      const div = document.createElement('div');
-      // For answer column, if image file exists, display a preview placeholder.
       const studentAnswerDisplay = ea.image 
         ? `<div class="essay-image-preview">Image: ${ea.image}</div>` 
         : ea.answer;
+      const correctAnswer = answerData.essays[ea.qNo] ? answerData.essays[ea.qNo].answer : 'N/A';
+      const div = document.createElement('div');
       div.innerHTML = `
-        <label>Q${ea.qNo}:</label>
         <div class="essay-marking-row">
-          <div class="essay-correct-answer">
-            <!-- Correct answer from Answer Tab -->
-            ${answerData.essays[ea.qNo] ? answerData.essays[ea.qNo].answer : 'N/A'}
+          <div class="col correct-answer">
+            ${correctAnswer}
           </div>
-          <div class="essay-student-answer">
+          <div class="col student-answer">
             ${studentAnswerDisplay}
           </div>
-          <div class="essay-mark-actions">
+          <div class="col marking-actions">
             <button type="button" onclick="assignMark(${idx+1}, 'correct')">Correct</button>
             <button type="button" onclick="assignMark(${idx+1}, 'incorrect')">Incorrect</button>
             <button type="button" onclick="assignMark(${idx+1}, 'custom', ${idx+1})">Custom Mark</button>
@@ -489,7 +485,7 @@ function applyCustomMark(idx) {
   document.getElementById(`apply-custom-${idx}`).style.display = 'none';
 }
 
-// --- Attach File Upload Listeners (Unchanged) ---
+// --- Attach File Upload Listeners ---
 function setupUploadListeners() {
   document.getElementById('upload-objective-answer').addEventListener('change',
     (e) => handleFileUpload(e, 'objective', 'objective-answer'));
