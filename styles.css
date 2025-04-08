@@ -1,165 +1,173 @@
-/* Basic styling */
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
-  margin: 0;
-  padding: 0;
-}
-header {
-  background: #007bff;
-  color: white;
-  padding: 1rem;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-nav {
-  display: flex;
-  justify-content: center;
-  background: #e0e0e0;
-  border-bottom: 1px solid #ccc;
-}
-.tab-button {
-  padding: 1rem 2rem;
-  cursor: pointer;
-  background: #ccc;
-  border: none;
-  outline: none;
-  margin: 0 0.25rem;
-  font-size: 1rem;
-  transition: background 0.3s;
-}
-.tab-button.active {
-  background: #007bff;
-  color: white;
-  font-weight: bold;
-}
-.tab-content {
-  display: none;
-  padding: 2rem;
-  background: white;
-  border: 2px solid #007bff;
-  margin: 2rem;
-  border-radius: 8px;
-}
-.tab-content.active {
-  display: block;
-}
-h3, h4 {
-  margin-bottom: 1rem;
-  color: #333;
-}
-form {
-  margin-bottom: 1.5rem;
-}
-form div {
-  margin-bottom: 1rem;
-}
-label {
-  display: inline-block;
-  min-width: 60px;
-  font-weight: 500;
-  margin-right: 10px;
-}
-input[type="text"],
-input[type="number"],
-textarea {
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 300px;
-  max-width: 100%;
-}
-textarea {
-  width: 100%;
-  height: 60px;
-}
-button {
-  padding: 0.5rem 1.25rem;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-button:hover {
-  background: #0056b3;
-}
-.upload-note {
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 1rem;
-  font-style: italic;
-}
-/* Two-column layout for objective forms */
-.two-col-form {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem 1rem;
-}
-.two-col-form div {
-  display: flex;
-  align-items: center;
-}
-.two-col-form label {
-  width: 40px;
-  margin-right: 5px;
-}
-/* Score Table */
-#score-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1.5rem;
-}
-#score-table th,
-#score-table td {
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  text-align: center;
-}
-#score-table th {
-  background: #007bff;
-  color: white;
-  font-weight: bold;
-}
-#score-table tbody tr:nth-child(even) {
-  background: #f2f2f2;
-}
-.score-controls {
-  margin-top: 2rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-.score-controls button {
-  flex: 1;
-  min-width: 150px;
-}
-.essay-group {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 5px;
-}
-.essay-addition {
-  margin-top: 0.5rem;
-}
-@media screen and (max-width: 600px) {
-  nav {
-    flex-direction: column;
-  }
-  .tab-button {
-    width: 100%;
-    text-align: center;
-  }
-  input[type="text"],
-  input[type="number"],
-  textarea {
-    width: 100%;
-  }
-  .score-controls {
-    flex-direction: column;
-  }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Marking App</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Include SheetJS library for XLSX/CSV handling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Include Tesseract.js for OCR (image processing) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <header>Examination Marking App</header>
+  <nav>
+    <button class="tab-button active" data-tab="answer">Answer Tab</button>
+    <button class="tab-button" data-tab="studentDB">Students Database</button>
+    <button class="tab-button" data-tab="marking">Marking Tab</button>
+    <button class="tab-button" data-tab="score">Score Tab</button>
+  </nav>
+
+  <!-- Answer Tab -->
+  <section id="answer" class="tab-content active">
+    <h3>Objective Answer Form</h3>
+    <form id="objective-answer-form"></form>
+    <div class="upload-note">
+      Expected file upload format: Column A – Question No.; Column B – Correct Answer.
+    </div>
+    <input type="file" id="upload-objective-answer" accept=".xlsx,.csv">
+    <br><br>
+    <h3>Essay Answer Form</h3>
+    <form id="essay-answer-form"></form>
+    <div class="upload-note">
+      Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.
+    </div>
+    <input type="file" id="upload-essay-answer" accept=".xlsx,.csv">
+    <br><br>
+    <button type="button" onclick="saveAnswerData()">Save Answer Data</button>
+  </section>
+
+  <!-- Students Database Tab -->
+  <section id="studentDB" class="tab-content">
+    <h3>Students Database</h3>
+    <!-- Student Information -->
+    <form id="student-db-form">
+      <fieldset>
+        <legend>Student Information</legend>
+        <div>
+          <label>Name:</label>
+          <input type="text" id="db-student-name">
+        </div>
+        <div>
+          <label>Class:</label>
+          <input type="text" id="db-student-class">
+        </div>
+        <div>
+          <label>Arm:</label>
+          <input type="text" id="db-student-arm">
+        </div>
+      </fieldset>
+      <!-- Objective Answer -->
+      <fieldset>
+        <legend>Objective Answer</legend>
+        <textarea id="db-objective-answer" placeholder="Enter the student's objective answer"></textarea>
+      </fieldset>
+      <!-- Essay Answer -->
+      <fieldset id="db-essay-fieldset">
+        <legend>Essay Answers</legend>
+        <div id="db-essay-form">
+          <!-- One dynamic essay group is preloaded -->
+          <div class="essay-group" data-index="1">
+            <label>Q1:</label>
+            <input type="text" placeholder="Question No" class="db-essay-qn">
+            <textarea placeholder="Answer" class="db-essay-ans"></textarea>
+            <input type="file" accept="image/png,image/jpeg,image/jpg" class="db-essay-img">
+            <div class="essay-addition">
+              <button type="button" class="add-essay-btn">Continue</button>
+              <button type="button" class="delete-essay-btn">Delete</button>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+      <br>
+      <button type="button" onclick="saveStudentData()">Save Student</button>
+      <button type="button" onclick="resetStudentDB()">Reset All Students</button>
+    </form>
+    <h4>Saved Students</h4>
+    <div id="student-db-reference"></div>
+  </section>
+
+  <!-- Marking Tab -->
+  <section id="marking" class="tab-content">
+    <h3>Student Information</h3>
+    <form id="student-info-form">
+      <div>
+        <label>Name:</label>
+        <input type="text" id="student-name" onblur="populateStudentData()">
+      </div>
+      <div>
+        <label>Class:</label>
+        <input type="text" id="student-class" onblur="populateStudentData()">
+      </div>
+      <div>
+        <label>Arm:</label>
+        <input type="text" id="student-arm" onblur="populateStudentData()">
+      </div>
+    </form>
+    <h3>Objective Marking Form</h3>
+    <form id="objective-marking-form"></form>
+    <hr>
+    <h3>Essay Marking Form</h3>
+    <!-- Essay marking displays in three columns -->
+    <form id="essay-marking-form"></form>
+    <br><br>
+    <button type="button" onclick="markAnswers()">Mark</button>
+    <div id="marking-notification"></div>
+    <!-- Detailed Marking Results -->
+    <div id="detailed-marking-result">
+      <h4>Objective Marking Details</h4>
+      <table id="objective-detail-table">
+        <thead>
+          <tr>
+            <th>Q No.</th>
+            <th>Correct Answer</th>
+            <th>Student Answer</th>
+            <th>Remark</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h4>Essay Marking Details</h4>
+      <table id="essay-detail-table">
+        <thead>
+          <tr>
+            <th>Q No.</th>
+            <th>Correct Answer</th>
+            <th>Student Answer</th>
+            <th>Remark</th>
+            <th>Marking Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Score Tab -->
+  <section id="score" class="tab-content">
+    <h3>Score Tab</h3>
+    <table id="score-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Class</th>
+          <th>Arm</th>
+          <th>Objective</th>
+          <th>Essay</th>
+          <th>Total Score</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="score-controls">
+      <button type="button" onclick="resetScores()">Reset</button>
+      <button type="button" onclick="downloadScores('csv')">Download CSV</button>
+      <button type="button" onclick="downloadScores('xlsx')">Download XLSX</button>
+      <button type="button" onclick="downloadScores('doc')">Download DOC</button>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
