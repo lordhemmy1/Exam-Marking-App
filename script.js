@@ -94,7 +94,7 @@ function markAnswers() {
     let scoreObj = 0, scoreEssay = 0;
     let objDetails = [];
     let essayDetails = [];
-  
+
     // Compare objective answers.
     for (let i = 1; i <= 50; i++) {
       const input = document.getElementById(`objective-marking-${i}`);
@@ -107,7 +107,7 @@ function markAnswers() {
         objDetails.push({ qNo, correctAns, studentAns, remark });
       }
     }
-  
+
     // Compare essay answers using a threshold of 55%.
     for (let i = 1; i <= essayLimit; i++) {
       const qn = document.getElementById(`essay-marking-qn-${i}`);
@@ -123,7 +123,7 @@ function markAnswers() {
         essayDetails.push({ qNo: key, correctAns: model ? model.answer : '', studentAns, remark });
       }
     }
-  
+
     const total = scoreObj + scoreEssay;
     studentData.push({ name, class: cls, arm, scoreObj, scoreEssay, total });
     updateScoreTable();
@@ -454,6 +454,7 @@ function populateStudentData() {
         : ea.answer;
       const correctAnswer = answerData.essays[ea.qNo] ? answerData.essays[ea.qNo].answer : 'N/A';
       const div = document.createElement('div');
+      // Create a hidden input for question number if needed.
       div.innerHTML = `
         <div class="essay-marking-row">
           <div class="col correct-answer">
