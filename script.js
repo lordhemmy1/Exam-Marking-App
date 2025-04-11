@@ -61,14 +61,14 @@ function createEssayForm(container, prefix, count = essayLimit) {
 function saveAnswerData() {
   answerData.objectives = {};
   answerData.essays = {};
-  // Save objective answers (use question number from input id)
+  // Save objective answers from 1 to 50.
   for (let i = 1; i <= 50; i++) {
     const input = document.getElementById(`objective-answer-${i}`);
     if (input && input.value.trim()) {
       answerData.objectives[input.id.split('-')[2]] = input.value.trim();
     }
   }
-  // Save essay answers, keyed by question number entered in the form.
+  // Save essay answers.
   for (let i = 1; i <= essayLimit; i++) {
     const qn = document.getElementById(`essay-answer-qn-${i}`);
     const mark = document.getElementById(`essay-answer-mark-${i}`);
@@ -95,7 +95,7 @@ function markAnswers() {
     let objDetails = [];
     let essayDetails = [];
   
-    // Compare objective answers
+    // Compare objective answers.
     for (let i = 1; i <= 50; i++) {
       const input = document.getElementById(`objective-marking-${i}`);
       if (input && input.value.trim()) {
@@ -108,7 +108,7 @@ function markAnswers() {
       }
     }
   
-    // Compare essay answers using similarity threshold (55% or above)
+    // Compare essay answers using a threshold of 55%.
     for (let i = 1; i <= essayLimit; i++) {
       const qn = document.getElementById(`essay-marking-qn-${i}`);
       const markEl = document.getElementById(`essay-marking-mark-${i}`);
@@ -223,6 +223,7 @@ function downloadFile(filename, content) {
 }
 
 // --- File Upload Handling with SheetJS ---
+// For the essay file upload in the Answer Tab, ignore the first row (headings) and start from the second row.
 function handleFileUpload(event, type, prefix) {
   const file = event.target.files[0];
   if (!file) return;
@@ -236,7 +237,11 @@ function handleFileUpload(event, type, prefix) {
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    if (type === 'essay' && prefix === 'essay-answer') {
+      // Remove first row (heading) for essay answers.
+      jsonData = jsonData.slice(1);
+    }
     if (type === 'objective') {
       jsonData.forEach(row => {
         if (row[0] && row[1]) {
@@ -331,30 +336,36 @@ function setupUploadListeners() {
 }
 
 // --- New Functions for Students Database Tab ---
-// Save student information and update reference display.
+// Save student information (with validation) and update reference display.
 function saveStudentData() {
   const name = document.getElementById('db-student-name').value.trim();
   const cls = document.getElementById('db-student-class').value.trim();
   const arm = document.getElementById('db-student-arm').value.trim();
   const objAnswer = document.getElementById('db-objective-answer').value.trim();
+  if (!name || !cls || !arm || !objAnswer) {
+    alert('All Student Information fields and Objective Answer must be filled.');
+    return;
+  }
   const essayGroups = document.querySelectorAll('#db-essay-form .essay-group');
   let essayAnswers = [];
-  essayGroups.forEach(group => {
+  for (let group of essayGroups) {
     const qn = group.querySelector('.db-essay-qn').value.trim();
     const ans = group.querySelector('.db-essay-ans').value.trim();
+    if (!qn || !ans) {
+      alert('All Essay Answer groups must have both Question No and Answer.');
+      return;
+    }
     const imgInput = group.querySelector('.db-essay-img');
     let imgFile = (imgInput && imgInput.files[0]) ? imgInput.files[0].name : '';
-    if (qn && ans) {
-      essayAnswers.push({ qNo: qn, answer: ans, image: imgFile });
-    }
-  });
+    essayAnswers.push({ qNo: qn, answer: ans, image: imgFile });
+  }
   const studentRecord = { name, class: cls, arm, objAnswer, essayAnswers };
   studentDB.push(studentRecord);
   if (studentDB.length > 400) {
     studentDB.shift();
   }
   updateStudentDBReference();
-  // Reset the Students Database form for new entry.
+  // Reset the Students Database form.
   document.getElementById('db-student-name').value = '';
   document.getElementById('db-student-class').value = '';
   document.getElementById('db-student-arm').value = '';
@@ -364,19 +375,20 @@ function saveStudentData() {
   alert('Student data saved.');
 }
 
-// Update the displayed student reference list.
+// Update the displayed student reference list with structured headings.
 function updateStudentDBReference() {
   const container = document.getElementById('student-db-reference');
-  container.innerHTML = '';
+  container.innerHTML = '<h4>Stored Students (Name, Class, Arm, Objective, Essay)</h4>';
   studentDB.forEach((student, index) => {
     const div = document.createElement('div');
-    div.innerText = `${index + 1}. ${student.name} (${student.class}, ${student.arm}) - Objective: ${student.objAnswer} | Essay: ${student.essayAnswers.map(ea => ea.image || ea.answer).join('; ')}`;
+    let essayStr = student.essayAnswers.map(ea => ea.image ? `[${ea.image}]` : ea.answer).join(' | ');
+    div.innerText = `${index + 1}. ${student.name} (${student.class}, ${student.arm}) - Objective: ${student.objAnswer} - Essay: ${essayStr}`;
     container.appendChild(div);
   });
 }
 
 // Create a new essay group for the Students Database tab.
-// Only a "Continue" button and a "Delete" button are provided.
+// Only a "Continue" button (to add a new group) and a "Delete" button are provided.
 function addNewEssayGroup() {
   const container = document.getElementById('db-essay-form');
   const index = container.children.length + 1;
@@ -410,6 +422,7 @@ function initStudentDBForm() {
 }
 
 // --- Modify Marking Tab: Auto-populate from Students Database ---
+// When teacher enters student info in the Marking Tab, auto-populate the corresponding answers.
 function populateStudentData() {
   const name = document.getElementById('student-name').value.trim();
   const cls = document.getElementById('student-class').value.trim();
@@ -439,6 +452,7 @@ function populateStudentData() {
         : ea.answer;
       const correctAnswer = answerData.essays[ea.qNo] ? answerData.essays[ea.qNo].answer : 'N/A';
       const div = document.createElement('div');
+      // Additionally, include a hidden field for question number if needed.
       div.innerHTML = `
         <div class="essay-marking-row">
           <div class="col correct-answer">
@@ -465,6 +479,7 @@ function populateStudentData() {
 function assignMark(idx, type, customIdx) {
   const markInput = document.getElementById(`essay-marking-mark-${idx}`);
   if (type === 'correct') {
+    // Look up the correct mark from answerData based on question number.
     const qnInput = document.getElementById(`essay-marking-qn-${idx}`);
     const answerKey = qnInput ? qnInput.value.trim() : '';
     const model = answerData.essays[answerKey];
