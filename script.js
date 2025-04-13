@@ -94,7 +94,7 @@ function markAnswers() {
     let scoreObj = 0, scoreEssay = 0;
     let objDetails = [];
     let essayDetails = [];
-
+  
     // Compare objective answers.
     for (let i = 1; i <= 50; i++) {
       const input = document.getElementById(`objective-marking-${i}`);
@@ -107,7 +107,7 @@ function markAnswers() {
         objDetails.push({ qNo, correctAns, studentAns, remark });
       }
     }
-
+  
     // Compare essay answers using a threshold of 55%.
     for (let i = 1; i <= essayLimit; i++) {
       const qn = document.getElementById(`essay-marking-qn-${i}`);
@@ -123,7 +123,7 @@ function markAnswers() {
         essayDetails.push({ qNo: key, correctAns: model ? model.answer : '', studentAns, remark });
       }
     }
-
+  
     const total = scoreObj + scoreEssay;
     studentData.push({ name, class: cls, arm, scoreObj, scoreEssay, total });
     updateScoreTable();
@@ -350,13 +350,16 @@ function saveStudentData() {
   let essayAnswers = [];
   for (let group of essayGroups) {
     const qn = group.querySelector('.db-essay-qn').value.trim();
+    // Accept if either an answer is provided or a file is uploaded.
     const ans = group.querySelector('.db-essay-ans').value.trim();
-    if (!qn || !ans) {
-      alert('All Essay Answer groups must have both Question No and Answer.');
+    const imgInput = group.querySelector('.db-essay-img');
+    const hasFile = imgInput && imgInput.files && imgInput.files.length > 0;
+    if (!qn || ((!ans) && !hasFile)) {
+      alert('Each Essay Answer group must have a Question No and an Answer or an uploaded file.');
       return;
     }
-    const imgInput = group.querySelector('.db-essay-img');
-    let imgFile = (imgInput && imgInput.files[0]) ? imgInput.files[0].name : '';
+    let imgFile = hasFile ? imgInput.files[0].name : '';
+    // Use the answer text if available; otherwise, use an empty string.
     essayAnswers.push({ qNo: qn, answer: ans, image: imgFile });
   }
   const studentRecord = { name, class: cls, arm, objAnswer, essayAnswers };
@@ -371,24 +374,40 @@ function saveStudentData() {
   document.getElementById('db-student-arm').value = '';
   document.getElementById('db-objective-answer').value = '';
   document.getElementById('db-essay-form').innerHTML = '';
-  addNewEssayGroup();
+  addNewEssayGroup();  // Always create one new group to start with.
   alert('Student data saved.');
 }
 
-// Update the displayed student reference list with structured headings.
+// Update the displayed student reference list using a table.
 function updateStudentDBReference() {
   const container = document.getElementById('student-db-reference');
-  container.innerHTML = '<h4>Stored Students (Name, Class, Arm, Objective, Essay)</h4>';
+  let html = `<table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Class</th>
+        <th>Arm</th>
+        <th>Objective Answer</th>
+        <th>Essay Answer</th>
+      </tr>
+    </thead>
+    <tbody>`;
   studentDB.forEach((student, index) => {
-    const div = document.createElement('div');
     let essayStr = student.essayAnswers.map(ea => ea.image ? `[${ea.image}]` : ea.answer).join(' | ');
-    div.innerText = `${index + 1}. ${student.name} (${student.class}, ${student.arm}) - Objective: ${student.objAnswer} - Essay: ${essayStr}`;
-    container.appendChild(div);
+    html += `<tr>
+      <td>${student.name}</td>
+      <td>${student.class}</td>
+      <td>${student.arm}</td>
+      <td>${student.objAnswer}</td>
+      <td>${essayStr}</td>
+    </tr>`;
   });
+  html += `</tbody></table>`;
+  container.innerHTML = html;
 }
 
 // Create a new essay group for the Students Database tab.
-// Only a "Continue" button (to add a new group) and a "Delete" button are provided.
+// Only a "Continue" button and a "Delete" button are provided.
 function addNewEssayGroup() {
   const container = document.getElementById('db-essay-form');
   const index = container.children.length + 1;
@@ -396,6 +415,7 @@ function addNewEssayGroup() {
   const div = document.createElement('div');
   div.classList.add('essay-group');
   div.setAttribute('data-index', index);
+  // "Decline" button removed, only "Continue" and "Delete" exist.
   div.innerHTML = `
     <label>Q${index}:</label>
     <input type="text" placeholder="Question No" class="db-essay-qn">
@@ -407,7 +427,7 @@ function addNewEssayGroup() {
     </div>
   `;
   container.appendChild(div);
-  // Attach event listener for "Continue" button immediately.
+  // Attach event listener for "Continue" button.
   div.querySelector('.add-essay-btn').addEventListener('click', () => {
     addNewEssayGroup();
   });
@@ -424,7 +444,7 @@ function initStudentDBForm() {
 }
 
 // --- Modify Marking Tab: Auto-populate from Students Database ---
-// When teacher enters student info in the Marking Tab, auto-populate the corresponding answers.
+// When teacher enters student info in the Marking Tab, auto-populate objective and essay forms.
 function populateStudentData() {
   const name = document.getElementById('student-name').value.trim();
   const cls = document.getElementById('student-class').value.trim();
@@ -449,12 +469,11 @@ function populateStudentData() {
     const essayFormContainer = document.getElementById('essay-marking-form');
     essayFormContainer.innerHTML = '';
     student.essayAnswers.forEach((ea, idx) => {
-      const studentAnswerDisplay = ea.image 
-        ? `<div class="essay-image-preview">Image: ${ea.image}</div>` 
+      const studentAnswerDisplay = ea.image
+        ? `<div class="essay-image-preview">Image: ${ea.image}</div>`
         : ea.answer;
       const correctAnswer = answerData.essays[ea.qNo] ? answerData.essays[ea.qNo].answer : 'N/A';
       const div = document.createElement('div');
-      // Create a hidden input for question number if needed.
       div.innerHTML = `
         <div class="essay-marking-row">
           <div class="col correct-answer">
