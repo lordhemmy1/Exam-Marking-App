@@ -424,14 +424,29 @@ function addNewEssayGroup() {
     </div>
   `;
   container.appendChild(div);
-  // Attach event listener for "Continue" button.
-  div.querySelector('.add-essay-btn').addEventListener('click', () => {
+  const continueBtn = div.querySelector('.add-essay-btn');
+  continueBtn.addEventListener('click', () => {
     console.log("Continue button clicked for essay group", index);
+    const prevCount = container.children.length;
     addNewEssayGroup();
+    const newCount = container.children.length;
+    if (newCount > prevCount) {
+      console.log("clicked and responsive");
+    } else {
+      console.log("clicked but not creating a new form set");
+    }
   });
-  // Attach event listener for "Delete" button.
-  div.querySelector('.delete-essay-btn').addEventListener('click', () => {
+  const deleteBtn = div.querySelector('.delete-essay-btn');
+  deleteBtn.addEventListener('click', () => {
+    console.log("Delete button clicked for essay group", index);
+    const prevCount = container.children.length;
     div.parentNode.removeChild(div);
+    const newCount = container.children.length;
+    if (newCount < prevCount) {
+      console.log("Delete clicked and responsive");
+    } else {
+      console.log("Delete clicked but not removing the form set");
+    }
   });
 }
 
@@ -459,7 +474,7 @@ function populateStudentData() {
     let answers = student.objAnswer.split('\n');
     answers.forEach((ans, idx) => {
       const div = document.createElement('div');
-      div.innerHTML = `<label>${idx + 1}.</label>
+      div.innerHTML = `<label>${idx+1}.</label>
       <input type="text" id="objective-marking-${idx+1}" value="${ans.trim()}">`;
       objFormContainer.appendChild(div);
     });
