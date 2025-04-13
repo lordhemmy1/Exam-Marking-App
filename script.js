@@ -350,16 +350,14 @@ function saveStudentData() {
   let essayAnswers = [];
   for (let group of essayGroups) {
     const qn = group.querySelector('.db-essay-qn').value.trim();
-    // Accept if either an answer is provided or a file is uploaded.
     const ans = group.querySelector('.db-essay-ans').value.trim();
     const imgInput = group.querySelector('.db-essay-img');
     const hasFile = imgInput && imgInput.files && imgInput.files.length > 0;
     if (!qn || ((!ans) && !hasFile)) {
-      alert('Each Essay Answer group must have a Question No and an Answer or an uploaded file.');
+      alert('Each Essay Answer group must have a Question No and either an Answer or an uploaded file.');
       return;
     }
     let imgFile = hasFile ? imgInput.files[0].name : '';
-    // Use the answer text if available; otherwise, use an empty string.
     essayAnswers.push({ qNo: qn, answer: ans, image: imgFile });
   }
   const studentRecord = { name, class: cls, arm, objAnswer, essayAnswers };
@@ -374,11 +372,11 @@ function saveStudentData() {
   document.getElementById('db-student-arm').value = '';
   document.getElementById('db-objective-answer').value = '';
   document.getElementById('db-essay-form').innerHTML = '';
-  addNewEssayGroup();  // Always create one new group to start with.
+  addNewEssayGroup();
   alert('Student data saved.');
 }
 
-// Update the displayed student reference list using a table.
+// Update the displayed student reference list as a table.
 function updateStudentDBReference() {
   const container = document.getElementById('student-db-reference');
   let html = `<table>
@@ -392,7 +390,7 @@ function updateStudentDBReference() {
       </tr>
     </thead>
     <tbody>`;
-  studentDB.forEach((student, index) => {
+  studentDB.forEach(student => {
     let essayStr = student.essayAnswers.map(ea => ea.image ? `[${ea.image}]` : ea.answer).join(' | ');
     html += `<tr>
       <td>${student.name}</td>
@@ -407,7 +405,7 @@ function updateStudentDBReference() {
 }
 
 // Create a new essay group for the Students Database tab.
-// Only a "Continue" button and a "Delete" button are provided.
+// Only a "Continue" button (to add a new group) and a "Delete" button are provided.
 function addNewEssayGroup() {
   const container = document.getElementById('db-essay-form');
   const index = container.children.length + 1;
@@ -415,7 +413,6 @@ function addNewEssayGroup() {
   const div = document.createElement('div');
   div.classList.add('essay-group');
   div.setAttribute('data-index', index);
-  // "Decline" button removed, only "Continue" and "Delete" exist.
   div.innerHTML = `
     <label>Q${index}:</label>
     <input type="text" placeholder="Question No" class="db-essay-qn">
@@ -429,6 +426,8 @@ function addNewEssayGroup() {
   container.appendChild(div);
   // Attach event listener for "Continue" button.
   div.querySelector('.add-essay-btn').addEventListener('click', () => {
+    // Debug log to ensure the button fires.
+    console.log("Continue button clicked for essay group", index);
     addNewEssayGroup();
   });
   // Attach event listener for "Delete" button.
@@ -444,7 +443,7 @@ function initStudentDBForm() {
 }
 
 // --- Modify Marking Tab: Auto-populate from Students Database ---
-// When teacher enters student info in the Marking Tab, auto-populate objective and essay forms.
+// When teacher enters student info in the Marking Tab, auto-populate the corresponding answers.
 function populateStudentData() {
   const name = document.getElementById('student-name').value.trim();
   const cls = document.getElementById('student-class').value.trim();
@@ -461,7 +460,7 @@ function populateStudentData() {
     let answers = student.objAnswer.split('\n');
     answers.forEach((ans, idx) => {
       const div = document.createElement('div');
-      div.innerHTML = `<label>${idx + 1}.</label>
+      div.innerHTML = `<label>${idx+1}.</label>
       <input type="text" id="objective-marking-${idx+1}" value="${ans.trim()}">`;
       objFormContainer.appendChild(div);
     });
