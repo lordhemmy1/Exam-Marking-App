@@ -1,91 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Exam Marking App</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- Include SheetJS library for XLSX/CSV handling -->
+  <link rel="stylesheet" href="styles.css" />
+  <!-- SheetJS for XLSX/CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Include Tesseract.js for OCR (image processing) -->
+  <!-- Tesseract.js for OCR -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
 </head>
 <body>
   <header>Examination Marking App</header>
   <nav>
     <button class="tab-button active" data-tab="answer">Answer Tab</button>
-    <button class="tab-button" data-tab="studentDB">Students' Database Tab</button>
+    <button class="tab-button" data-tab="studentDB">Students Database</button>
     <button class="tab-button" data-tab="marking">Marking Tab</button>
     <button class="tab-button" data-tab="score">Score Tab</button>
   </nav>
 
-  <!-- Answer Tab (unchanged) -->
+  <!-- Answer Tab -->
   <section id="answer" class="tab-content active">
     <h3>Objective Answer Form</h3>
     <form id="objective-answer-form"></form>
     <div class="upload-note">
       Expected file upload format: Column A – Question No.; Column B – Correct Answer.
     </div>
-    <input type="file" id="upload-objective-answer" accept=".xlsx,.csv">
+    <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />
     <br><br>
     <h3>Essay Answer Form</h3>
     <form id="essay-answer-form"></form>
     <div class="upload-note">
       Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.
     </div>
-    <input type="file" id="upload-essay-answer" accept=".xlsx,.csv">
+    <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />
     <br><br>
-    <button onclick="saveAnswerData()">Save Answer Data</button>
+    <button type="button" onclick="saveAnswerData()">Save Answer Data</button>
   </section>
 
   <!-- Students Database Tab -->
   <section id="studentDB" class="tab-content">
     <h3>Students Database</h3>
-    <!-- Student Information -->
-    <form id="student-db-form">
+    <form id="db-student-form">
+      <!-- Reset Database -->
+      <button type="button" onclick="resetStudentDB()">Reset Database</button>
       <fieldset>
         <legend>Student Information</legend>
-        <div>
-          <label>Name:</label>
-          <input type="text" id="db-student-name">
-        </div>
-        <div>
-          <label>Class:</label>
-          <input type="text" id="db-student-class">
-        </div>
-        <div>
-          <label>Arm:</label>
-          <input type="text" id="db-student-arm">
-        </div>
+        <div><label>Name:</label><input type="text" id="db-student-name"></div>
+        <div><label>Class:</label><input type="text" id="db-student-class"></div>
+        <div><label>Arm:</label><input type="text" id="db-student-arm"></div>
       </fieldset>
-      <!-- Objective Answer -->
       <fieldset>
         <legend>Objective Answer</legend>
-        <textarea id="db-objective-answer" placeholder="Enter the student's objective answer"></textarea>
+        <textarea id="db-objective-answer" placeholder="Enter student's objective answer"></textarea>
       </fieldset>
-      <!-- Essay Answer -->
-      <fieldset id="db-essay-fieldset">
+      <fieldset>
         <legend>Essay Answers</legend>
-        <div id="db-essay-form">
-          <!-- One dynamic essay answer group is preloaded -->
-          <div class="essay-group" data-index="1">
-            <label>Q1:</label>
-            <input type="text" placeholder="Question No" class="db-essay-qn">
-            <textarea placeholder="Answer" class="db-essay-ans"></textarea>
-            <!-- Accept picture as file input -->
-            <input type="file" accept="image/png,image/jpeg,image/jpg" class="db-essay-img">
-            <div class="essay-addition">
-              <button type="button" class="add-essay-btn">Continue</button>
-              <button type="button" class="decline-essay-btn">Decline</button>
-            </div>
-          </div>
-        </div>
+        <div id="db-essay-form"></div>
       </fieldset>
-      <br>
       <button type="button" onclick="saveStudentData()">Save Student</button>
     </form>
-    <!-- Display saved student reference -->
-    <h4>Saved Students</h4>
     <div id="student-db-reference"></div>
   </section>
 
@@ -93,54 +67,27 @@
   <section id="marking" class="tab-content">
     <h3>Student Information</h3>
     <form id="student-info-form">
-      <div>
-        <label>Name:</label>
-        <input type="text" id="student-name" onblur="populateStudentData()">
-      </div>
-      <div>
-        <label>Class:</label>
-        <input type="text" id="student-class" onblur="populateStudentData()">
-      </div>
-      <div>
-        <label>Arm:</label>
-        <input type="text" id="student-arm" onblur="populateStudentData()">
-      </div>
+      <div><label>Name:</label><input type="text" id="student-name" onblur="populateStudentData()"></div>
+      <div><label>Class:</label><input type="text" id="student-class" onblur="populateStudentData()"></div>
+      <div><label>Arm:</label><input type="text" id="student-arm" onblur="populateStudentData()"></div>
     </form>
     <h3>Objective Marking Form</h3>
-    <!-- This form auto-populates from the Students Database -->
     <form id="objective-marking-form"></form>
     <hr>
     <h3>Essay Marking Form</h3>
-    <!-- This form auto-populates from the Students Database -->
     <form id="essay-marking-form"></form>
     <br><br>
-    <button onclick="markAnswers()">Mark</button>
+    <button type="button" onclick="markAnswers()">Mark</button>
     <div id="marking-notification"></div>
-    <!-- Detailed Marking Results -->
     <div id="detailed-marking-result">
       <h4>Objective Marking Details</h4>
       <table id="objective-detail-table">
-        <thead>
-          <tr>
-            <th>Q No.</th>
-            <th>Correct Answer</th>
-            <th>Student Answer</th>
-            <th>Remark</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Q No.</th><th>Correct Answer</th><th>Student Answer</th><th>Remark</th></tr></thead>
         <tbody></tbody>
       </table>
       <h4>Essay Marking Details</h4>
       <table id="essay-detail-table">
-        <thead>
-          <tr>
-            <th>Q No.</th>
-            <th>Correct Answer</th>
-            <th>Student Answer</th>
-            <th>Remark</th>
-            <th>Marking Action</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Q No.</th><th>Correct Answer</th><th>Student Answer</th><th>Remark</th><th>Action</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -151,22 +98,15 @@
     <h3>Score Tab</h3>
     <table id="score-table">
       <thead>
-        <tr>
-          <th>Name</th>
-          <th>Class</th>
-          <th>Arm</th>
-          <th>Objective</th>
-          <th>Essay</th>
-          <th>Total Score</th>
-        </tr>
+        <tr><th>Name</th><th>Class</th><th>Arm</th><th>Objective</th><th>Essay</th><th>Total</th></tr>
       </thead>
       <tbody></tbody>
     </table>
     <div class="score-controls">
       <button onclick="resetScores()">Reset</button>
-      <button onclick="downloadScores('csv')">Download CSV</button>
-      <button onclick="downloadScores('xlsx')">Download XLSX</button>
-      <button onclick="downloadScores('doc')">Download DOC</button>
+      <button onclick="downloadScores('csv')">CSV</button>
+      <button onclick="downloadScores('xlsx')">XLSX</button>
+      <button onclick="downloadScores('doc')">DOC</button>
     </div>
   </section>
 
