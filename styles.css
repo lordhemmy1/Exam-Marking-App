@@ -24,9 +24,7 @@ nav {
   cursor: pointer;
   background: #ccc;
   border: none;
-  outline: none;
   margin: 0 0.25rem;
-  font-size: 1rem;
   transition: background 0.3s;
 }
 .tab-button.active {
@@ -57,9 +55,8 @@ form div {
 }
 label {
   display: inline-block;
-  min-width: 60px;
+  width: 80px;
   font-weight: 500;
-  margin-right: 10px;
 }
 input[type="text"],
 input[type="number"],
@@ -81,7 +78,6 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 1rem;
 }
 button:hover {
   background: #0056b3;
@@ -92,7 +88,6 @@ button:hover {
   margin-bottom: 1rem;
   font-style: italic;
 }
-/* Two-column layout for objective forms */
 .two-col-form {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -103,9 +98,10 @@ button:hover {
   align-items: center;
 }
 .two-col-form label {
-  width: 40px;
+  width: 30px;
   margin-right: 5px;
 }
+
 /* Score Table */
 #score-table {
   width: 100%;
@@ -114,14 +110,13 @@ button:hover {
 }
 #score-table th,
 #score-table td {
-  padding: 0.75rem;
   border: 1px solid #ccc;
+  padding: 0.75rem;
   text-align: center;
 }
 #score-table th {
   background: #007bff;
   color: white;
-  font-weight: bold;
 }
 #score-table tbody tr:nth-child(even) {
   background: #f2f2f2;
@@ -129,14 +124,13 @@ button:hover {
 .score-controls {
   margin-top: 2rem;
   display: flex;
-  justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
 }
 .score-controls button {
   flex: 1;
-  min-width: 150px;
 }
+
+/* Essay-group in Students Database */
 .essay-group {
   border: 1px solid #ccc;
   padding: 1rem;
@@ -146,20 +140,46 @@ button:hover {
 .essay-addition {
   margin-top: 0.5rem;
 }
-@media screen and (max-width: 600px) {
-  nav {
-    flex-direction: column;
-  }
-  .tab-button {
-    width: 100%;
-    text-align: center;
-  }
+
+/* Error messages inside essay groups */
+.error-msg {
+  color: #d9534f;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+/* Students DB table */
+#student-db-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+#student-db-table th,
+#student-db-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+}
+#student-db-table th {
+  background: #007bff;
+  color: white;
+}
+#student-db-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* Reset-DB button styling */
+#db-student-form > button {
+  background: #dc3545;
+}
+#db-student-form > button:hover {
+  background: #c82333;
+}
+
+@media (max-width: 600px) {
+  nav { flex-direction: column; }
+  .tab-button { width: 100%; }
   input[type="text"],
   input[type="number"],
-  textarea {
-    width: 100%;
-  }
-  .score-controls {
-    flex-direction: column;
-  }
+  textarea { width: 100%; }
+  .score-controls { flex-direction: column; }
 }
