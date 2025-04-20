@@ -42,24 +42,27 @@
   <section id="studentDB" class="tab-content">
     <h3>Students Database</h3>
     <form id="db-student-form">
-      <!-- Reset Database -->
-      <button type="button" onclick="resetStudentDB()">Reset Database</button>
       <fieldset>
         <legend>Student Information</legend>
         <div><label>Name:</label><input type="text" id="db-student-name"></div>
         <div><label>Class:</label><input type="text" id="db-student-class"></div>
         <div><label>Arm:</label><input type="text" id="db-student-arm"></div>
       </fieldset>
+
       <fieldset>
         <legend>Objective Answer</legend>
         <textarea id="db-objective-answer" placeholder="Enter student's objective answer"></textarea>
       </fieldset>
+
       <fieldset>
         <legend>Essay Answers</legend>
         <div id="db-essay-form"></div>
       </fieldset>
+
       <button type="button" onclick="saveStudentData()">Save Student</button>
     </form>
+
+    <!-- JS will render the table AND the Reset button here -->
     <div id="student-db-reference"></div>
   </section>
 
@@ -67,27 +70,35 @@
   <section id="marking" class="tab-content">
     <h3>Student Information</h3>
     <form id="student-info-form">
-      <div><label>Name:</label><input type="text" id="student-name" onblur="populateStudentData()"></div>
-      <div><label>Class:</label><input type="text" id="student-class" onblur="populateStudentData()"></div>
-      <div><label>Arm:</label><input type="text" id="student-arm" onblur="populateStudentData()"></div>
+      <div><label>Name:</label><input type="text" id="student-name"></div>
+      <div><label>Class:</label><input type="text" id="student-class"></div>
+      <div><label>Arm:</label><input type="text" id="student-arm"></div>
+      <button type="button" id="upload-student-btn">Upload Student</button>
     </form>
+
     <h3>Objective Marking Form</h3>
     <form id="objective-marking-form"></form>
-    <hr>
+
     <h3>Essay Marking Form</h3>
     <form id="essay-marking-form"></form>
-    <br><br>
+
     <button type="button" onclick="markAnswers()">Mark</button>
     <div id="marking-notification"></div>
+
     <div id="detailed-marking-result">
       <h4>Objective Marking Details</h4>
       <table id="objective-detail-table">
-        <thead><tr><th>Q No.</th><th>Correct Answer</th><th>Student Answer</th><th>Remark</th></tr></thead>
+        <thead>
+          <tr><th>Q No.</th><th>Correct Answer</th><th>Student Answer</th><th>Remark</th></tr>
+        </thead>
         <tbody></tbody>
       </table>
+
       <h4>Essay Marking Details</h4>
       <table id="essay-detail-table">
-        <thead><tr><th>Q No.</th><th>Correct Answer</th><th>Student Answer</th><th>Remark</th><th>Action</th></tr></thead>
+        <thead>
+          <tr><th>Q No.</th><th>Correct Answer</th><th>Student Answer</th><th>Remark</th><th>Action</th></tr>
+        </thead>
         <tbody></tbody>
       </table>
     </div>
@@ -112,4 +123,4 @@
 
   <script src="script.js"></script>
 </body>
-</html>
+        </html>
