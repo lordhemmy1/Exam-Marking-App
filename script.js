@@ -8,186 +8,163 @@ document.querySelectorAll('.tab-button').forEach(btn => {
   });
 });
 
-// --- Persistence Keys ---
-const KEY_ANSWERS   = 'answerData';
-const KEY_STUDENTDB = 'studentDB';
-const KEY_SCORES    = 'studentData';
+// --- Global Data Structures ---
+const essayLimit = 20;
+let answerData = { objectives: {}, essays: {} };
+let studentData = [];
+let studentDB = JSON.parse(localStorage.getItem('studentDB') || '[]');
 
-// --- Global Data Structures (loaded from localStorage) ---
-let answerData  = JSON.parse(localStorage.getItem(KEY_ANSWERS)   || '{"objectives":{},"essays":{}}');
-let studentDB   = JSON.parse(localStorage.getItem(KEY_STUDENTDB) || '[]');
-let studentData = JSON.parse(localStorage.getItem(KEY_SCORES)    || '[]');
-
-// --- Limits ---
-const DEFAULT_OBJ_COUNT = 50;
-const ESSAY_LIMIT       = 20;
-
-// --- Persistence Helpers ---
-function persistAnswers()   { localStorage.setItem(KEY_ANSWERS,   JSON.stringify(answerData)); }
-function persistDB()        { localStorage.setItem(KEY_STUDENTDB, JSON.stringify(studentDB)); }
-function persistScores()    { localStorage.setItem(KEY_SCORES,    JSON.stringify(studentData)); }
-
-// --- Notification ---
-function notify(msg) {
+// --- Notification Function ---
+function notify(message) {
   const note = document.getElementById('marking-notification');
-  if (note) note.innerText = msg;
+  if (note) note.innerText = message;
 }
 
-// --- Answer Tab: Dynamic Forms ---
-function createObjectiveFormTwoCol(container, prefix, count = DEFAULT_OBJ_COUNT) {
-  container.innerHTML = '';
-  container.classList.add('two-col-form');
-  for (let i = 1; i <= count; i++) {
-    container.innerHTML += `<div><label>${i}.</label>
-      <input type="text" id="${prefix}-${i}" maxlength="50" value="${answerData.objectives[i]||''}"></div>`;
-  }
-}
-function createEssayForm(container, prefix, limit = ESSAY_LIMIT) {
-  container.innerHTML = '';
-  for (let i = 1; i <= limit; i++) {
-    const e = answerData.essays[i]||{qn:'',mark:'',answer:''};
-    container.innerHTML += `
-      <div>
-        <label>Q${i}</label>
-        <input type="text" id="${prefix}-qn-${i}" placeholder="Question No" value="${e.qn||''}">
-        <input type="number" id="${prefix}-mark-${i}" placeholder="Mark"       value="${e.mark||''}">
-        <textarea id="${prefix}-ans-${i}" placeholder="Answer">${e.answer||''}</textarea>
-      </div>`;
-  }
-}
-function saveAnswerData() {
-  answerData.objectives = {};
-  for (let i = 1; i <= DEFAULT_OBJ_COUNT; i++) {
-    const v = document.getElementById(`objective-answer-${i}`).value.trim();
-    if (v) answerData.objectives[i] = v;
-  }
-  answerData.essays = {};
-  for (let i = 1; i <= ESSAY_LIMIT; i++) {
-    const q = document.getElementById(`essay-answer-qn-${i}`).value.trim();
-    const m = document.getElementById(`essay-answer-mark-${i}`).value;
-    const a = document.getElementById(`essay-answer-ans-${i}`).value.trim();
-    if (q && a) answerData.essays[q] = { mark: +m||0, answer: a };
-  }
-  persistAnswers();
-  alert('Teacher answers saved.');
+// --- Utility: Save to localStorage ---
+function persistDB() {
+  localStorage.setItem('studentDB', JSON.stringify(studentDB));
 }
 
-// --- Students Database Tab ---
+// --- Students Database: Generate Table ---
 function renderStudentDBTable() {
-  const c = document.getElementById('student-db-reference');
-  c.innerHTML = '<button id="reset-db">Reset Database</button><table><thead><tr>'
-    +['Name','Class','Arm','Objective','Essay','Actions'].map(h=>`<th>${h}</th>`).join('')
-    +'</tr></thead><tbody>'
-    + studentDB.map((s,i)=>{
-      const obj = s.objAnswer.split(',').map((v,j)=>`${j+1}:${v.trim()}`).join('<br>');
-      const essays = s.essayAnswers.map(e=>`Q${e.qNo}: `+
-        (e.answer?e.answer:`<img src="${e.imageData}" width="100">`))
-        .join('<br>');
-      return `<tr data-idx="${i}">
-        <td>${s.name}</td><td>${s.class}</td><td>${s.arm}</td>
-        <td>${obj}</td><td>${essays}</td>
-        <td><button onclick="startEdit(${i})">Edit</button></td>
-      </tr>`;
-    }).join('')+'</tbody></table>';
-  document.getElementById('reset-db').onclick = () => {
-    if(confirm('Clear all students?')) {
-      studentDB=[]; persistDB(); renderStudentDBTable(); initDBForm();
-    }
-  };
+  const container = document.getElementById('student-db-reference');
+  container.innerHTML = `
+    <table id="student-db-table">
+      <thead>
+        <tr>
+          <th>Name</th><th>Class</th><th>Arm</th><th>Objective Answer</th><th>Essay Answers</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${studentDB.map((s, i) => {
+          const essays = s.essayAnswers.map(e=>e.image?`[${e.image}]`:e.answer).join('; ');
+          return `<tr data-index="${i}">
+            <td>${s.name}</td>
+            <td>${s.class}</td>
+            <td>${s.arm}</td>
+            <td>${s.objAnswer.replace(/\n/g,'<br>')}</td>
+            <td>${essays}</td>
+            <td><button onclick="editStudent(${i})">Edit</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
-function initDBForm() {
-  const form = document.getElementById('student-db-form');
-  form.reset();
-  form.removeAttribute('data-edit-idx');
-  const essayContainer = document.getElementById('db-essay-form');
-  essayContainer.innerHTML = '';
-  addEssayGroup();
-}
-
-function startEdit(idx) {
+// --- Edit Student ---
+function editStudent(idx) {
   const s = studentDB[idx];
-  const form = document.getElementById('student-db-form');
-  form.dataset.editIdx = idx;
-  form['db-student-name'].value  = s.name;
-  form['db-student-class'].value = s.class;
-  form['db-student-arm'].value   = s.arm;
-  form['db-objective-answer'].value = s.objAnswer;
-  const essayContainer = document.getElementById('db-essay-form');
-  essayContainer.innerHTML = '';
-  s.essayAnswers.forEach(e=>addEssayGroup(e));
+  document.getElementById('db-student-name').value = s.name;
+  document.getElementById('db-student-class').value = s.class;
+  document.getElementById('db-student-arm').value = s.arm;
+  document.getElementById('db-objective-answer').value = s.objAnswer;
+  // rebuild essay form with existing data
+  document.getElementById('db-essay-form').innerHTML = '';
+  s.essayAnswers.forEach((ea, i) => {
+    addNewEssayGroup(ea, idx);
+  });
 }
 
-function addEssayGroup(data={qn:'',answer:'',imageData:''}) {
-  const c = document.getElementById('db-essay-form');
-  const idx = c.children.length+1;
+// --- New: Reset Entire Student DB ---
+function resetStudentDB() {
+  if (!confirm('Wipe all student records?')) return;
+  studentDB = [];
+  persistDB();
+  renderStudentDBTable();
+}
+
+// --- Save Student (with validation + update) ---
+function saveStudentData() {
+  const name = document.getElementById('db-student-name').value.trim();
+  const cls  = document.getElementById('db-student-class').value.trim();
+  const arm  = document.getElementById('db-student-arm').value.trim();
+  const obj  = document.getElementById('db-objective-answer').value.trim();
+  // validate basics
+  if (!name||!cls||!arm||!obj) {
+    alert('Name, Class, Arm and Objective Answer are required.');
+    return;
+  }
+  const groups = Array.from(document.querySelectorAll('#db-essay-form .essay-group'));
+  let essayAnswers = [];
+  for (let g of groups) {
+    const qn  = g.querySelector('.db-essay-qn').value.trim();
+    const ans = g.querySelector('.db-essay-ans').value.trim();
+    const fileInput = g.querySelector('.db-essay-img');
+    const img = fileInput.files[0]?.name || '';
+    if (!qn) {
+      g.querySelector('.error-msg')?.remove();
+      g.insertAdjacentHTML('beforeend','<div class="error-msg">Question No required</div>');
+      return;
+    }
+    if (!ans && !img) {
+      g.querySelector('.error-msg')?.remove();
+      g.insertAdjacentHTML('beforeend','<div class="error-msg">Answer text or image required</div>');
+      return;
+    }
+    g.querySelector('.error-msg')?.remove();
+    essayAnswers.push({ qNo: qn, answer: ans, image: img });
+  }
+
+  // if editing an existing record (we stored index on form)
+  const editIdx = document.getElementById('db-student-form').dataset.editIndex;
+  if (editIdx != null) {
+    studentDB[editIdx] = { name, class: cls, arm, objAnswer: obj, essayAnswers };
+    delete document.getElementById('db-student-form').dataset.editIndex;
+  } else {
+    studentDB.push({ name, class: cls, arm, objAnswer: obj, essayAnswers });
+    if (studentDB.length>400) studentDB.shift();
+  }
+
+  persistDB();
+  renderStudentDBTable();
+
+  // reset form
+  document.getElementById('db-student-form').reset();
+  document.getElementById('db-essay-form').innerHTML = '';
+  addNewEssayGroup();
+}
+
+// --- Essay Groups: Always attach continue/delete handlers ---
+function addNewEssayGroup(existingData, editIdx) {
+  const container = document.getElementById('db-essay-form');
+  const idx = container.children.length + 1;
+  if (idx>essayLimit) return;
   const div = document.createElement('div');
   div.classList.add('essay-group');
   div.innerHTML = `
     <label>Q${idx}:</label>
-    <input type="text" class="db-essay-qn" value="${data.qn}" placeholder="Question No">
-    <textarea class="db-essay-ans" placeholder="Answer">${data.answer}</textarea>
+    <input type="text" class="db-essay-qn" placeholder="Question No" value="${existingData?.qNo||''}">
+    <textarea class="db-essay-ans" placeholder="Answer">${existingData?.answer||''}</textarea>
     <input type="file" class="db-essay-img" accept="image/*">
-    <div class="preview">${data.imageData?`<img src="${data.imageData}" width="100">`:''}</div>
-    <div class="errors"></div>
-    <button class="add">Continue</button>
-    <button class="del">Delete</button>
+    <div class="essay-addition">
+      <button type="button" class="add-essay-btn">Continue</button>
+      <button type="button" class="delete-essay-btn">Delete</button>
+    </div>
+    <div class="error-msg"></div>
   `;
-  c.append(div);
-  div.querySelector('.add').onclick = ()=>addEssayGroup();
-  div.querySelector('.del').onclick = ()=>div.remove();
-  const imgInput = div.querySelector('.db-essay-img');
-  imgInput.onchange = e=>{
-    const f=e.target.files[0];
-    const reader=new FileReader();
-    reader.onload = evt=> div.querySelector('.preview').innerHTML=`<img src="${evt.target.result}" width="100">`, 
-    reader.readAsDataURL(f);
-  };
+  container.appendChild(div);
+  div.querySelector('.add-essay-btn').addEventListener('click', () => {
+    addNewEssayGroup();
+  });
+  div.querySelector('.delete-essay-btn').addEventListener('click', () => {
+    div.remove();
+  });
 }
 
-function saveStudentData() {
-  const name = form['db-student-name'].value.trim();
-  const cls  = form['db-student-class'].value.trim();
-  const arm  = form['db-student-arm'].value.trim();
-  const obj  = form['db-objective-answer'].value.trim();
-  if(!name||!cls||!arm||!obj){ alert('Fill all fields'); return; }
-  const groups = [...document.querySelectorAll('.essay-group')];
-  const essayAnswers = [];
-  for(let g of groups){
-    const qn = g.querySelector('.db-essay-qn').value.trim();
-    const ans= g.querySelector('.db-essay-ans').value.trim();
-    const imgData = g.querySelector('.preview img')?.src||'';
-    if(!qn||( !ans && !imgData )) {
-      g.querySelector('.errors').innerText='Provide QNo and either text or image';
-      return;
-    }
-    g.querySelector('.errors').innerText='';
-    essayAnswers.push({qNo:qn,answer:ans,imageData:imgData});
-  }
-  const record={name, class:cls, arm, objAnswer:obj, essayAnswers};
-  const editIdx = parseInt(form.dataset.editIdx);
-  if (!isNaN(editIdx)) studentDB[editIdx]=record;
-  else {
-    studentDB.push(record);
-    if(studentDB.length>400) studentDB.shift();
-  }
-  persistDB(); renderStudentDBTable(); initDBForm();
+// --- Initialize DB Form on load ---
+function initStudentDBForm() {
+  const form = document.getElementById('db-student-form');
+  form.insertAdjacentHTML('afterbegin','<button type="button" onclick="resetStudentDB()">Reset Database</button>');
+  addNewEssayGroup();
+  renderStudentDBTable();
 }
 
-// --- Marking Tab Setup ---
-function initMarkingTab() {
-  const sel = document.createElement('select');
-  sel.id='student-select';
-  sel.innerHTML='<option value="">--Select Student--</option>'
-    +studentDB.map((s,i)=>`<option value="${i}">${s.name}</option>`).join('');
-  const info = document.getElementById('student-info-form');
-  info.prepend(sel);
-  sel.onchange = ()=>{
-    const i=sel.value; if(i==='') return;
-    const s=studentDB[i];
-    info['student-name'].value = s.name;
-    info['student-class'].value= s.class;
-    info['student-arm'].value  = s.arm;
+// --- On load for everything else ---
+window.onload = () => {
+  initStudentDBForm();
+  // <-- keep your existing calls to setupUploadListeners(), createObjectiveFormTwoCol(), etc.
+};nt-arm'].value  = s.arm;
   };
   // Populate objectives button
   const btnObj = document.createElement('button');
