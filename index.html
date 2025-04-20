@@ -12,6 +12,7 @@
 </head>
 <body>
   <header>Examination Marking App</header>
+
   <nav>
     <button class="tab-button active" data-tab="answer">Answer Tab</button>
     <button class="tab-button" data-tab="studentDB">Students Database</button>
@@ -29,7 +30,7 @@
       </div>
       <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />
     </div>
-    <br>
+
     <h3>Essay Answer Form</h3>
     <div id="essay-answer-container">
       <form id="essay-answer-form"></form>
@@ -38,13 +39,14 @@
       </div>
       <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />
     </div>
-    <br>
+
     <button type="button" onclick="saveAnswerData()">Save Answer Data</button>
   </section>
 
   <!-- Students Database Tab -->
   <section id="studentDB" class="tab-content">
     <h3>Students Database</h3>
+
     <form id="db-student-form">
       <fieldset>
         <legend>Student Information</legend>
@@ -66,6 +68,7 @@
       <button type="button" onclick="saveStudentData()">Save Student</button>
     </form>
 
+    <!-- JS will render the student table + “Reset Students” button here -->
     <div id="student-db-reference"></div>
   </section>
 
@@ -81,12 +84,11 @@
 
     <h3>Objective Marking</h3>
     <form id="objective-marking-form"></form>
-    <button type="button" id="mark-objective-btn" onclick="markObjectiveOnly()">Mark Objective</button>
-    <div id="objective-marking-details"></div>
+    <!-- JS will create the Mark Objective button (#mark-objective-btn) and the details <div id="objective-mark-details"> -->
 
     <h3>Essay Marking</h3>
     <form id="essay-marking-form"></form>
-    <button type="button" onclick="finalizeMarking()">Finalize & Transfer to Scores</button>
+    <button type="button" onclick="finalizeMarking()">Finalize &amp; Transfer to Scores</button>
     <div id="marking-notification"></div>
   </section>
 
@@ -116,4 +118,5 @@
 
   <script src="script.js"></script>
 </body>
+                                                            </html></body>
 </html>
