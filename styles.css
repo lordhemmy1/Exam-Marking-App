@@ -89,7 +89,15 @@ button:hover {
   font-style: italic;
 }
 
-/* Two‐column layout */
+/* Style all file‑upload buttons lemon green */
+input[type="file"] {
+  background-color: #adff2f;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Two‑column layout */
 .two-col-form {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -124,7 +132,7 @@ button:hover {
   flex: 1;
 }
 
-/* Essay-group in Students Database */
+/* Essay‑group in Students Database */
 .essay-group {
   border: 1px solid #ccc;
   padding: 1rem;
@@ -161,7 +169,7 @@ button:hover {
   background: #f9f9f9;
 }
 
-/* Reset-DB button styling */
+/* Reset‑DB button styling */
 #db-student-form > button {
   background: #dc3545;
 }
