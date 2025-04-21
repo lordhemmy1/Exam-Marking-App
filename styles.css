@@ -89,12 +89,22 @@ button:hover {
   font-style: italic;
 }
 
-/* Style all file‑upload buttons lemon green */
+/* Style all file‑upload inputs lemon green */
 input[type="file"] {
   background-color: #adff2f;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* Clear Database button styling */
+#clear-students-btn {
+  background: #dc3545;
+  color: white;
+  margin-top: 1rem;
+}
+#clear-students-btn:hover {
+  background: #c82333;
 }
 
 /* Two‑column layout */
@@ -169,17 +179,11 @@ input[type="file"] {
   background: #f9f9f9;
 }
 
-/* Clear Database button styling */
-#clear-db-btn {
+/* Reset‑DB button styling (for student form) */
+#db-student-form > button {
   background: #dc3545;
-  color: white;
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-top: 1rem;
 }
-#clear-db-btn:hover {
+#db-student-form > button:hover {
   background: #c82333;
 }
 
