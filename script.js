@@ -69,9 +69,7 @@ function insertAnswerTabDescription() {
 function renderObjectiveKeyForm() {
   const c = document.getElementById('objective-answer-form');
   c.innerHTML = '';
-  // switch to the two-column layout CSS class
-  c.classList.remove('two-columns');
-  c.classList.add('two-col-form');
+  c.classList.add('two-columns');
 
   const n = DataManager.answerKey.objective.length;
   const count = Math.min(Math.max(n, 50), 100);
@@ -126,10 +124,10 @@ function saveAnswerData() {
   const essays = [];
   const divs = document.querySelectorAll('#essay-answer-form div');
   divs.forEach((div, idx) => {
-    const markEl = div.querySelector(`input[name="mark_${idx + 1}"]`);
-    const ansEl  = div.querySelector(`textarea[name="ans_${idx + 1}"]`);
-    const mark   = markEl ? Number(markEl.value) : 0;
-    const answer = ansEl  ? ansEl.value.trim()   : '';
+    const markEl = div.querySelector(`input[name="mark_${idx+1}"]`);
+    const ansEl = div.querySelector(`textarea[name="ans_${idx+1}"]`);
+    const mark = markEl ? Number(markEl.value) : 0;
+    const answer = ansEl ? ansEl.value.trim() : '';
     essays.push({ questionNo: idx + 1, mark, answer });
   });
   DataManager.answerKey.essay = essays;
@@ -148,13 +146,12 @@ function saveAnswerData() {
     const btn = document.getElementById('save-answers-btn');
     btn.insertAdjacentElement('afterend', notif);
   }
-  notif.textContent = 'Answers have been saved successfully';
+  notif.textContent = 'Answers has been saved successfully';
   notif.style.color = 'green';
 }
 
 // --- Student DB: Dynamic Essay Sets & Buttons ---
 let editingIndex = null;
-
 function initDBEssaySection() {
   const c = document.getElementById('db-essay-form');
   c.innerHTML = '';
@@ -175,22 +172,19 @@ function addDBEssaySet(qNo = '', answer = '') {
   `;
   container.appendChild(set);
 
-  const ta        = set.querySelector('.db-essay-text');
+  const ta = set.querySelector('.db-essay-text');
   const fileInput = set.querySelector('.db-essay-file');
-  const img       = set.querySelector('img');
+  const img = set.querySelector('img');
 
-  ta.addEventListener('input', () => {
-    fileInput.style.display = ta.value.trim() ? 'none' : '';
-  });
-
+  // toggle file/text
+  ta.addEventListener('input', () => { fileInput.style.display = ta.value.trim() ? 'none' : ''; });
   fileInput.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if (!file) return;
+    const file = fileInput.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-      img.src           = e.target.result;
+      img.src = e.target.result;
       img.style.display = '';
-      ta.style.display  = 'none';
+      ta.style.display = 'none';
     };
     reader.readAsDataURL(file);
   });
@@ -200,22 +194,22 @@ function addDBEssaySet(qNo = '', answer = '') {
 }
 
 function bindStudentButtons() {
-  const saveBtn   = document.getElementById('save-student-btn');
+  const form = document.getElementById('db-student-form');
+  const saveBtn = document.getElementById('save-student-btn');
   const updateBtn = document.createElement('button');
-  updateBtn.id         = 'update-student-btn';
-  updateBtn.type       = 'button';
+  updateBtn.id = 'update-student-btn';
+  updateBtn.type = 'button';
   updateBtn.textContent = 'Update Student';
   updateBtn.style.display = 'none';
   saveBtn.insertAdjacentElement('afterend', updateBtn);
-
   saveBtn.addEventListener('click', saveStudentData);
   updateBtn.addEventListener('click', updateStudentData);
 }
 
 async function saveStudentData() {
   const name = document.getElementById('db-student-name').value.trim();
-  const cls  = document.getElementById('db-student-class').value.trim();
-  const arm  = document.getElementById('db-student-arm').value.trim();
+  const cls = document.getElementById('db-student-class').value.trim();
+  const arm = document.getElementById('db-student-arm').value.trim();
   if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
@@ -226,32 +220,23 @@ async function saveStudentData() {
   if (!sets.length) return alert('At least one essay answer required');
   const essayData = [];
   for (const set of sets) {
-    const qno       = set.querySelector('.db-essay-qno').value.trim();
+    const qno = set.querySelector('.db-essay-qno').value.trim();
     if (!qno) return alert('Question number required for each essay answer');
-    const ta        = set.querySelector('.db-essay-text');
+    const ta = set.querySelector('.db-essay-text');
     const fileInput = set.querySelector('.db-essay-file');
     let ans = '';
-    if (ta.style.display !== 'none' && ta.value.trim()) {
-      ans = ta.value.trim();
-    } else if (fileInput.files.length) {
+    if (ta.style.display !== 'none' && ta.value.trim()) ans = ta.value.trim();
+    else if (fileInput.files.length) {
       ans = await new Promise(res => {
         const fr = new FileReader();
         fr.onload = e => res(e.target.result);
         fr.readAsDataURL(fileInput.files[0]);
       });
-    } else {
-      return alert(`Provide text or upload image for essay Q${qno}`);
-    }
+    } else return alert(`Provide text or upload image for essay Q${qno}`);
     essayData.push({ questionNo: qno, answer: ans });
   }
 
-  DataManager.students.push({
-    name,
-    class: cls,
-    arm,
-    objectiveAnswers: objArr,
-    essayAnswers:     essayData
-  });
+  DataManager.students.push({ name, class: cls, arm, objectiveAnswers: objArr, essayAnswers: essayData });
   DataManager.saveStudents();
   updateStudentAnswerInfo();
   alert('Student saved');
@@ -263,7 +248,6 @@ function updateStudentAnswerInfo() {
   const c = document.getElementById('student-db-reference');
   c.innerHTML = '';
   if (!DataManager.students.length) return;
-
   const tbl = document.createElement('table');
   tbl.innerHTML = `
     <thead>
@@ -280,16 +264,14 @@ function updateStudentAnswerInfo() {
             ${s.essayAnswers.map(e =>
               e.answer.startsWith('data:')
                 ? `<img src="${e.answer}" style="width:50px;height:50px;"/>`
-                : e.answer
-            ).join('<br/>')}
+                : e.answer).join('<br/>')}
           </td>
           <td><button data-index="${i}" class="edit-student">Edit</button></td>
         </tr>`).join('')}
     </tbody>
   `;
   c.appendChild(tbl);
-  c.querySelectorAll('.edit-student')
-    .forEach(btn => btn.addEventListener('click', () => startEditStudent(btn.dataset.index)));
+  c.querySelectorAll('.edit-student').forEach(btn => btn.addEventListener('click', () => startEditStudent(btn.dataset.index)));
 }
 
 function startEditStudent(idx) {
@@ -304,9 +286,9 @@ function startEditStudent(idx) {
   editingIndex = idx;
 
   // toggle buttons
-  const saveBtn   = document.getElementById('save-student-btn');
+  const saveBtn = document.getElementById('save-student-btn');
   const updateBtn = document.getElementById('update-student-btn');
-  saveBtn.style.display   = 'none';
+  saveBtn.style.display = 'none';
   updateBtn.style.display = '';
 }
 
@@ -314,8 +296,8 @@ async function updateStudentData() {
   if (editingIndex === null) return;
 
   const name = document.getElementById('db-student-name').value.trim();
-  const cls  = document.getElementById('db-student-class').value.trim();
-  const arm  = document.getElementById('db-student-arm').value.trim();
+  const cls = document.getElementById('db-student-class').value.trim();
+  const arm = document.getElementById('db-student-arm').value.trim();
   if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
@@ -327,30 +309,21 @@ async function updateStudentData() {
   for (const set of sets) {
     const qno = set.querySelector('.db-essay-qno').value.trim();
     if (!qno) return alert('Question number required');
-    const ta        = set.querySelector('.db-essay-text');
+    const ta = set.querySelector('.db-essay-text');
     const fileInput = set.querySelector('.db-essay-file');
     let ans = '';
-    if (ta.style.display !== 'none' && ta.value.trim()) {
-      ans = ta.value.trim();
-    } else if (fileInput.files.length) {
+    if (ta.style.display !== 'none' && ta.value.trim()) ans = ta.value.trim();
+    else if (fileInput.files.length) {
       ans = await new Promise(res => {
         const fr = new FileReader();
         fr.onload = e => res(e.target.result);
         fr.readAsDataURL(fileInput.files[0]);
       });
-    } else {
-      return alert(`Provide answer for essay Q${qno}`);
-    }
+    } else return alert(`Provide answer for essay Q${qno}`);
     essayData.push({ questionNo: qno, answer: ans });
   }
 
-  DataManager.students[editingIndex] = {
-    name,
-    class:            cls,
-    arm,
-    objectiveAnswers: objArr,
-    essayAnswers:     essayData
-  };
+  DataManager.students[editingIndex] = { name, class: cls, arm, objectiveAnswers: objArr, essayAnswers: essayData };
   DataManager.saveStudents();
   updateStudentAnswerInfo();
   alert('Student updated');
@@ -359,9 +332,9 @@ async function updateStudentData() {
   editingIndex = null;
 
   // toggle buttons
-  const saveBtn   = document.getElementById('save-student-btn');
+  const saveBtn = document.getElementById('save-student-btn');
   const updateBtn = document.getElementById('update-student-btn');
-  saveBtn.style.display   = '';
+  saveBtn.style.display = '';
   updateBtn.style.display = 'none';
 }
 
@@ -397,3 +370,4 @@ function resetAllData() {
 }
 
 window.addEventListener('DOMContentLoaded', () => DataManager.init());
+
