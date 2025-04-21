@@ -21,6 +21,7 @@ const DataManager = {
     renderObjectiveKeyForm();
     renderEssayKeyForm();
     bindAnswerSaveButton();
+    bindUploadHandlers();
     initDBEssaySection();
     bindStudentButtons();
     updateStudentAnswerInfo();
@@ -69,12 +70,11 @@ function insertAnswerTabDescription() {
 function renderObjectiveKeyForm() {
   const c = document.getElementById('objective-answer-form');
   c.innerHTML = '';
-  // switch to the two-column layout CSS class
   c.classList.remove('two-columns');
   c.classList.add('two-col-form');
 
   const n = DataManager.answerKey.objective.length;
-  const count = Math.min(Math.max(n, 50), 100);
+  const count = Math.max(n, 50);
   for (let i = 1; i <= count; i++) {
     const existing = DataManager.answerKey.objective.find(o => Number(o.questionNo) === i);
     const ans = existing ? existing.answer : '';
@@ -90,16 +90,21 @@ function renderObjectiveKeyForm() {
 function renderEssayKeyForm() {
   const c = document.getElementById('essay-answer-form');
   c.innerHTML = '';
-  let n = DataManager.answerKey.essay.length;
-  const count = Math.min(Math.max(n, 1), 20);
+  const n = DataManager.answerKey.essay.length;
+  const count = n > 0 ? Math.min(n, 20) : 1;
 
   for (let i = 1; i <= count; i++) {
-    const existing = DataManager.answerKey.essay.find(e => Number(e.questionNo) === i);
+    const existing = DataManager.answerKey.essay.find(e => {
+      // match either by position or by stored questionNo
+      return Number(e.questionNo) === i || (!Number(e.questionNo) && i <= n && DataManager.answerKey.essay[i-1]);
+    });
+    const qNo = existing ? existing.questionNo : '';
     const mark = existing ? existing.mark : '';
     const ans = existing ? existing.answer : '';
     const div = document.createElement('div');
     div.innerHTML = `
-      <label>Q${i} (Max):</label>
+      <label>Set ${i}:</label>
+      <input type="text" name="qno_${i}" placeholder="Question No." value="${qNo}" />
       <input type="number" name="mark_${i}" placeholder="Mark allotted" value="${mark}" />
       <textarea name="ans_${i}" placeholder="Correct answer">${ans}</textarea>
     `;
@@ -107,6 +112,7 @@ function renderEssayKeyForm() {
   }
 }
 
+// --- Bind Save / Upload Handlers ---
 function bindAnswerSaveButton() {
   const btn = document.getElementById('save-answers-btn');
   if (btn) {
@@ -115,44 +121,114 @@ function bindAnswerSaveButton() {
   }
 }
 
+function bindUploadHandlers() {
+  const objInput = document.getElementById('upload-objective-answer');
+  const essayInput = document.getElementById('upload-essay-answer');
+  if (objInput) objInput.addEventListener('change', handleObjectiveUpload);
+  if (essayInput) essayInput.addEventListener('change', handleEssayUpload);
+}
+
+// --- File Upload Parsers ---
+function handleObjectiveUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const data = evt.target.result;
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    if (rows.length <= 1) return;
+    const dataRows = rows.slice(1);
+    DataManager.answerKey.objective = dataRows.map(r => ({
+      questionNo: Number(r[0]) || undefined,
+      answer: String(r[1] || '').trim()
+    }));
+    DataManager.saveAnswerKey();
+    renderObjectiveKeyForm();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function handleEssayUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const data = evt.target.result;
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    if (rows.length <= 1) return;
+    const dataRows = rows.slice(1).slice(0, 20);
+    DataManager.answerKey.essay = dataRows.map(r => ({
+      questionNo: String(r[0] || '').trim(),
+      mark: r[1] != null ? r[1] : '',
+      answer: String(r[2] || '').trim()
+    }));
+    DataManager.saveAnswerKey();
+    renderEssayKeyForm();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// --- Save Answers with Validation ---
 function saveAnswerData() {
+  // validate objective: at least one non-empty
+  const objInputs = Array.from(document.querySelectorAll('#objective-answer-form input'));
+  if (objInputs.every(i => !i.value.trim())) {
+    return alert('Please fill at least one objective answer before saving.');
+  }
+
   // collect objective
-  const inputs = document.querySelectorAll('#objective-answer-form input');
-  DataManager.answerKey.objective = Array.from(inputs).map((i, idx) => ({
+  DataManager.answerKey.objective = objInputs.map((i, idx) => ({
     questionNo: idx + 1,
     answer: i.value.trim()
   }));
-  // collect essay
-  const essays = [];
-  const divs = document.querySelectorAll('#essay-answer-form div');
-  divs.forEach((div, idx) => {
-    const markEl = div.querySelector(`input[name="mark_${idx + 1}"]`);
-    const ansEl  = div.querySelector(`textarea[name="ans_${idx + 1}"]`);
-    const mark   = markEl ? Number(markEl.value) : 0;
-    const answer = ansEl  ? ansEl.value.trim()   : '';
-    essays.push({ questionNo: idx + 1, mark, answer });
+
+  // validate essay: at least one complete set
+  const essayDivs = Array.from(document.querySelectorAll('#essay-answer-form div'));
+  const hasOne = essayDivs.some((div, idx) => {
+    const qno  = div.querySelector(`input[name="qno_${idx+1}"]`).value.trim();
+    const mark = div.querySelector(`input[name="mark_${idx+1}"]`).value.trim();
+    const ans  = div.querySelector(`textarea[name="ans_${idx+1}"]`).value.trim();
+    return qno && mark && ans;
   });
-  DataManager.answerKey.essay = essays;
+  if (!hasOne) {
+    return alert('Please fill at least one essay question (Question No., Mark, and Answer).');
+  }
+
+  // collect essay
+  DataManager.answerKey.essay = essayDivs.map((div, idx) => {
+    const qnoEl  = div.querySelector(`input[name="qno_${idx+1}"]`);
+    const markEl = div.querySelector(`input[name="mark_${idx+1}"]`);
+    const ansEl  = div.querySelector(`textarea[name="ans_${idx+1}"]`);
+    return {
+      questionNo: qnoEl.value.trim(),
+      mark: markEl.value.trim(),
+      answer: ansEl.value.trim()
+    };
+  });
+
   DataManager.saveAnswerKey();
 
-  // clear fields
-  inputs.forEach(i => i.value = '');
-  document.querySelectorAll('#essay-answer-form input').forEach(i => i.value = '');
-  document.querySelectorAll('#essay-answer-form textarea').forEach(t => t.value = '');
+  // re-render forms (refresh with saved data)
+  renderObjectiveKeyForm();
+  renderEssayKeyForm();
 
   // show notification
   let notif = document.getElementById('answer-notification');
   if (!notif) {
     notif = document.createElement('div');
     notif.id = 'answer-notification';
-    const btn = document.getElementById('save-answers-btn');
-    btn.insertAdjacentElement('afterend', notif);
+    document.getElementById('save-answers-btn')
+            .insertAdjacentElement('afterend', notif);
   }
-  notif.textContent = 'Answers have been saved successfully';
+  notif.textContent = 'All answers (objective and essay) have been saved successfully';
   notif.style.color = 'green';
 }
 
-// --- Student DB: Dynamic Essay Sets & Buttons ---
+// --- Student DB & Marking (unchanged) ---
 let editingIndex = null;
 
 function initDBEssaySection() {
@@ -304,10 +380,8 @@ function startEditStudent(idx) {
   editingIndex = idx;
 
   // toggle buttons
-  const saveBtn   = document.getElementById('save-student-btn');
-  const updateBtn = document.getElementById('update-student-btn');
-  saveBtn.style.display   = 'none';
-  updateBtn.style.display = '';
+  document.getElementById('save-student-btn').style.display   = 'none';
+  document.getElementById('update-student-btn').style.display = '';
 }
 
 async function updateStudentData() {
@@ -359,10 +433,8 @@ async function updateStudentData() {
   editingIndex = null;
 
   // toggle buttons
-  const saveBtn   = document.getElementById('save-student-btn');
-  const updateBtn = document.getElementById('update-student-btn');
-  saveBtn.style.display   = '';
-  updateBtn.style.display = 'none';
+  document.getElementById('save-student-btn').style.display   = '';
+  document.getElementById('update-student-btn').style.display = 'none';
 }
 
 // --- Marking & Score Tabs remain unchanged ---
