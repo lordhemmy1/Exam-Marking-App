@@ -195,3 +195,30 @@ input[type="file"] {
   textarea { width: 100%; }
   .score-controls { flex-direction: column; }
 }
+
+.essay-marking-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+.teacher-answer,
+.student-answer,
+.mark-tools {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.student-answer img {
+  max-width: 100%;
+}
+.awarded-mark {
+  margin-left: 0.5rem;
+  font-weight: bold;
+}
+#essay-marking-details,
+#objective-marking-details {
+  margin-top: 1rem;
+  font-weight: bold;
+}
