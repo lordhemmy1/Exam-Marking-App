@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Exam Marking App</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css"/>
   <!-- SheetJS for XLSX/CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <!-- Tesseract.js for OCR -->
@@ -27,10 +27,8 @@
       <div class="upload-note">
         Expected file upload format: Column A – Question No.; Column B – Correct Answer.
       </div>
-      <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />
-    </div>
-
-    <br />
+      <input type="file" id="upload-objective-answer" accept=".xlsx,.csv"/>
+    </div><br/>
 
     <h3>Essay Answer Form</h3>
     <div id="essay-answer-container">
@@ -38,10 +36,8 @@
       <div class="upload-note">
         Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.
       </div>
-      <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />
-    </div>
-
-    <br />
+      <input type="file" id="upload-essay-answer" accept=".xlsx,.csv"/>
+    </div><br/>
 
     <button type="button" id="save-answers-btn">Save Answers</button>
   </section>
@@ -52,47 +48,47 @@
     <form id="db-student-form">
       <fieldset>
         <legend>Student Information</legend>
-        <div><label>Name:</label><input type="text" id="db-student-name" /></div>
-        <div><label>Class:</label><input type="text" id="db-student-class" /></div>
-        <div><label>Arm:</label><input type="text" id="db-student-arm" /></div>
+        <div><label>Name:</label><input type="text" id="db-student-name"/></div>
+        <div><label>Class:</label><input type="text" id="db-student-class"/></div>
+        <div><label>Arm:</label><input type="text" id="db-student-arm"/></div>
       </fieldset>
-
       <fieldset>
         <legend>Objective Answers (comma‑separated)</legend>
         <textarea id="db-objective-answer" placeholder="E.g. A,B,C,..."></textarea>
       </fieldset>
-
       <fieldset>
         <legend>Essay Answers</legend>
         <div id="db-essay-form"></div>
       </fieldset>
-
-      <button type="button" id="save-student-btn">Save Student</button>
+      <button type="button" id="save-student-btn">Add Student</button>
     </form>
 
-    <h4>Students Answer Information</h4>
+    <h4>Student Information</h4>
     <div id="student-db-reference"></div>
     <button type="button" id="clear-students-btn">Clear Database</button>
   </section>
 
   <!-- Marking Tab -->
   <section id="marking" class="tab-content">
-    <h3>Load Student for Marking</h3>
+    <h3>Student Information</h3>
     <form id="student-info-form">
-      <div><label>Name:</label><input type="text" id="student-name" /></div>
-      <div><label>Class:</label><input type="text" id="student-class" /></div>
-      <div><label>Arm:</label><input type="text" id="student-arm" /></div>
-      <button type="button" id="upload-student-btn">Upload Student</button>
+      <div><label>Name:</label><input type="text" id="student-name"/></div>
+      <div><label>Class:</label><input type="text" id="student-class"/></div>
+      <div><label>Arm:</label><input type="text" id="student-arm"/></div>
+      <button type="button" id="upload-student-btn">Search Student</button>
     </form>
 
-    <h3>Objective Marking</h3>
+    <h3>Student Objective Answers</h3>
     <form id="objective-marking-form"></form>
+    <button type="button" id="populate-objectives-btn">Populate Objectives</button>
     <button type="button" id="mark-objective-btn" onclick="markObjectiveOnly()">Mark Objective</button>
     <div id="objective-marking-details"></div>
 
-    <h3>Essay Marking</h3>
+    <h3>Student Essay Answers</h3>
     <form id="essay-marking-form"></form>
-    <button type="button" onclick="finalizeMarking()">Finalize & Transfer to Scores</button>
+    <div id="essay-marking-details"></div>
+
+    <button type="button" onclick="finalizeMarking()">Record Mark</button>
     <div id="marking-notification"></div>
   </section>
 
@@ -113,7 +109,6 @@
       <button onclick="downloadScores('csv')">Download CSV</button>
       <button onclick="downloadScores('xlsx')">Download XLSX</button>
       <button onclick="downloadScores('doc')">Download DOC</button>
-      <br /><br />
       <button onclick="resetAllData()" style="background: darkred; color: white;">
         Reset All
       </button>
@@ -122,4 +117,4 @@
 
   <script src="script.js"></script>
 </body>
-                                                            </html>
+</html>
