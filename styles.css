@@ -1,3 +1,5 @@
+/* styles.css */
+
 /* Basic styling */
 body {
   font-family: Arial, sans-serif;
@@ -88,15 +90,13 @@ button:hover {
   margin-bottom: 1rem;
   font-style: italic;
 }
-
-/* Style all file‑upload inputs lemon green */
+/* Style file‑upload inputs */
 input[type="file"] {
   background-color: #adff2f;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
 }
-
 /* Clear Database button styling */
 #clear-students-btn {
   background: #dc3545;
@@ -106,14 +106,12 @@ input[type="file"] {
 #clear-students-btn:hover {
   background: #c82333;
 }
-
 /* Two‑column layout */
 .two-col-form {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem 1rem;
 }
-
 /* Score Table */
 #score-table {
   width: 100%;
@@ -141,7 +139,6 @@ input[type="file"] {
 .score-controls button {
   flex: 1;
 }
-
 /* Essay‑group in Students Database */
 .essay-group {
   border: 1px solid #ccc;
@@ -152,14 +149,12 @@ input[type="file"] {
 .essay-addition {
   margin-top: 0.5rem;
 }
-
 /* Error messages inside essay groups */
 .error-msg {
   color: #d9534f;
   margin-top: 0.25rem;
   font-size: 0.9rem;
 }
-
 /* Students DB table */
 #student-db-table {
   width: 100%;
@@ -178,47 +173,26 @@ input[type="file"] {
 #student-db-table tbody tr:nth-child(even) {
   background: #f9f9f9;
 }
-
-/* Reset‑DB button styling (for student form) */
+/* Reset‑DB button styling */
 #db-student-form > button {
   background: #dc3545;
 }
 #db-student-form > button:hover {
   background: #c82333;
 }
-
 @media (max-width: 600px) {
-  nav { flex-direction: column; }
-  .tab-button { width: 100%; }
+  nav {
+    flex-direction: column;
+  }
+  .tab-button {
+    width: 100%;
+  }
   input[type="text"],
   input[type="number"],
-  textarea { width: 100%; }
-  .score-controls { flex-direction: column; }
-}
-
-.essay-marking-row {
-  display: grid;
-  grid-template-columns: 2fr 2fr 1fr;
-  gap: 1rem;
-  align-items: start;
-  margin-bottom: 1rem;
-}
-.teacher-answer,
-.student-answer,
-.mark-tools {
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-.student-answer img {
-  max-width: 100%;
-}
-.awarded-mark {
-  margin-left: 0.5rem;
-  font-weight: bold;
-}
-#essay-marking-details,
-#objective-marking-details {
-  margin-top: 1rem;
-  font-weight: bold;
+  textarea {
+    width: 100%;
+  }
+  .score-controls {
+    flex-direction: column;
+  }
 }
