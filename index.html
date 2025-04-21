@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,7 +17,10 @@
     <button class="tab-button" data-tab="studentDB">Students Database</button>
     <button class="tab-button" data-tab="marking">Marking Tab</button>
     <button class="tab-button" data-tab="score">Score Tab</button>
-  </nav>  <!-- Answer Tab -->  <section id="answer" class="tab-content active">
+  </nav>
+
+  <!-- Answer Tab -->
+  <section id="answer" class="tab-content active">
     <h3>Objective Answer Form</h3>
     <!-- Description inserted by script -->
     <div id="objective-answer-container">
@@ -26,7 +30,9 @@
       </div>
       <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />
     </div>
+
     <br />
+
     <h3>Essay Answer Form</h3>
     <div id="essay-answer-container">
       <form id="essay-answer-form"></form>
@@ -35,9 +41,15 @@
       </div>
       <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />
     </div>
+
     <br />
-    <button type="button" onclick="saveAnswerData()">Save Answer Data</button>
-  </section>  <!-- Students Database Tab -->  <section id="studentDB" class="tab-content">
+
+    <!-- Save Answers button bound by script -->
+    <button type="button" id="save-answers-btn">Save Answers</button>
+  </section>
+
+  <!-- Students Database Tab -->
+  <section id="studentDB" class="tab-content">
     <h3>Students Database</h3>
     <form id="db-student-form">
       <fieldset>
@@ -45,41 +57,49 @@
         <div><label>Name:</label><input type="text" id="db-student-name" /></div>
         <div><label>Class:</label><input type="text" id="db-student-class" /></div>
         <div><label>Arm:</label><input type="text" id="db-student-arm" /></div>
-      </fieldset><fieldset>
-    <legend>Objective Answers (comma‑separated)</legend>
-    <textarea id="db-objective-answer" placeholder="E.g. A,B,C,..."></textarea>
-  </fieldset>
+      </fieldset>
 
-  <fieldset>
-    <legend>Essay Answers</legend>
-    <div id="db-essay-form"></div>
-  </fieldset>
+      <fieldset>
+        <legend>Objective Answers (comma‑separated)</legend>
+        <textarea id="db-objective-answer" placeholder="E.g. A,B,C,..."></textarea>
+      </fieldset>
 
-  <!-- Save/Update button hooked by script -->
-  <button type="button">Save Student</button>
-</form>
+      <fieldset>
+        <legend>Essay Answers</legend>
+        <div id="db-essay-form"></div>
+      </fieldset>
 
-<h4>Students Answer Information</h4>
-<div id="student-db-reference"></div>
+      <!-- Save / Update buttons hooked by script -->
+      <button type="button" id="save-student-btn">Save Student</button>
+    </form>
 
-  </section>  <!-- Marking Tab -->  <section id="marking" class="tab-content">
+    <h4>Students Answer Information</h4>
+    <div id="student-db-reference"></div>
+  </section>
+
+  <!-- Marking Tab -->
+  <section id="marking" class="tab-content">
     <h3>Load Student for Marking</h3>
     <form id="student-info-form">
       <div><label>Name:</label><input type="text" id="student-name" /></div>
       <div><label>Class:</label><input type="text" id="student-class" /></div>
       <div><label>Arm:</label><input type="text" id="student-arm" /></div>
       <button type="button" id="upload-student-btn">Upload Student</button>
-    </form><h3>Objective Marking</h3>
-<form id="objective-marking-form"></form>
-<button type="button" id="mark-objective-btn" onclick="markObjectiveOnly()">Mark Objective</button>
-<div id="objective-marking-details"></div>
+    </form>
 
-<h3>Essay Marking</h3>
-<form id="essay-marking-form"></form>
-<button type="button" onclick="finalizeMarking()">Finalize & Transfer to Scores</button>
-<div id="marking-notification"></div>
+    <h3>Objective Marking</h3>
+    <form id="objective-marking-form"></form>
+    <button type="button" id="mark-objective-btn" onclick="markObjectiveOnly()">Mark Objective</button>
+    <div id="objective-marking-details"></div>
 
-  </section>  <!-- Score Tab -->  <section id="score" class="tab-content">
+    <h3>Essay Marking</h3>
+    <form id="essay-marking-form"></form>
+    <button type="button" onclick="finalizeMarking()">Finalize & Transfer to Scores</button>
+    <div id="marking-notification"></div>
+  </section>
+
+  <!-- Score Tab -->
+  <section id="score" class="tab-content">
     <h3>Score Tab</h3>
     <table id="score-table">
       <thead>
@@ -100,5 +120,8 @@
         Reset All
       </button>
     </div>
-  </section>  <script src="script.js"></script></body>
-</html>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+  </html>
