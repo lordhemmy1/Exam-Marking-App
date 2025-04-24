@@ -1,4 +1,4 @@
-// script.js
+er.init());
 
 // --- Data Manager (uses localStorage) ---
 const DataManager = {
@@ -13,7 +13,7 @@ const DataManager = {
     const sc = localStorage.getItem('scoresDB');
     if (ak) this.answerKey = JSON.parse(ak);
     if (sd) this.students = JSON.parse(sd);
-    if (sc) this.scores = JSON.parse(sc);
+    if (sc) this.scores   = JSON.parse(sc);
 
     // initialize UI
     renameAnswerTab();
@@ -22,14 +22,18 @@ const DataManager = {
     renderEssayKeyForm();
     bindAnswerSaveButton();
     bindUploadHandlers();
+
     initDBEssaySection();
     bindStudentButtons();
     bindClearStudentsButton();
     updateStudentAnswerInfo();
+
+    bindMarkingTab();
     updateScoreTable();
 
-    // new marking tab bindings
-    bindMarkingTab();
+    // update teacher-key stats if previously loaded
+    updateObjectiveKeyStats();
+    updateEssayKeyStats();
   },
 
   saveAnswerKey() {
@@ -44,6 +48,8 @@ const DataManager = {
     localStorage.setItem('scoresDB', JSON.stringify(this.scores));
   }
 };
+
+window.addEventListener('DOMContentLoaded', () => DataManager.init());
 
 // --- Tab Navigation ---
 document.querySelectorAll('.tab-button').forEach(btn => {
@@ -73,10 +79,8 @@ function insertAnswerTabDescription() {
 function renderObjectiveKeyForm() {
   const c = document.getElementById('objective-answer-form');
   c.innerHTML = '';
-  c.classList.remove('two-columns');
   c.classList.add('two-col-form');
-  const n = DataManager.answerKey.objective.length;
-  const count = Math.max(n, 50);
+  const count = Math.max(DataManager.answerKey.objective.length, 50);
   for (let i = 1; i <= count; i++) {
     const existing = DataManager.answerKey.objective.find(o => Number(o.questionNo) === i);
     const ans = existing ? existing.answer : '';
@@ -108,6 +112,53 @@ function renderEssayKeyForm() {
     `;
     c.appendChild(div);
   }
+}
+
+// --- Stats for Teacher’s Answer Tab ---
+function updateObjectiveKeyStats() {
+  const form = document.getElementById('objective-answer-form');
+  const divs = Array.from(form.children);
+  let count = 0;
+  divs.forEach(div => {
+    const val = div.querySelector('input').value.trim();
+    if (val) {
+      div.style.display = '';
+      count++;
+    } else {
+      div.style.display = 'none';
+    }
+  });
+  let el = document.getElementById('objective-key-total');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'objective-key-total';
+    form.parentNode.insertBefore(el, form.nextSibling);
+  }
+  el.textContent = `Total Objective Marks: ${count}`;
+}
+
+function updateEssayKeyStats() {
+  const form = document.getElementById('essay-answer-form');
+  const sets = Array.from(form.children);
+  let total = 0;
+  sets.forEach(div => {
+    const qno = div.querySelector('input[name^="qno_"]')?.value.trim();
+    const mark = div.querySelector('input[name^="mark_"]')?.value;
+    const ans = div.querySelector('textarea')?.value.trim();
+    if (qno && mark && ans) {
+      div.style.display = '';
+      total += Number(mark);
+    } else {
+      div.style.display = 'none';
+    }
+  });
+  let el = document.getElementById('essay-key-total');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'essay-key-total';
+    form.parentNode.insertBefore(el, form.nextSibling);
+  }
+  el.textContent = `Total Essay Marks: ${total}`;
 }
 
 // --- Bind Teacher-Answer Save / Upload ---
@@ -144,6 +195,7 @@ function handleObjectiveUpload(e) {
     }));
     DataManager.saveAnswerKey();
     renderObjectiveKeyForm();
+    updateObjectiveKeyStats();
   };
   reader.readAsArrayBuffer(file);
 }
@@ -166,6 +218,7 @@ function handleEssayUpload(e) {
     }));
     DataManager.saveAnswerKey();
     renderEssayKeyForm();
+    updateEssayKeyStats();
   };
   reader.readAsArrayBuffer(file);
 }
@@ -185,18 +238,18 @@ function saveAnswerData() {
   // validate essay
   const essayDivs = Array.from(document.querySelectorAll('#essay-answer-form div'));
   const hasOne = essayDivs.some((div, idx) => {
-    const qno  = div.querySelector(`input[name="qno_${idx+1}"]`).value.trim();
-    const mark = div.querySelector(`input[name="mark_${idx+1}"]`).value.trim();
-    const ans  = div.querySelector(`textarea[name="ans_${idx+1}"]`).value.trim();
+    const qno  = div.querySelector(`input[name=\"qno_${idx+1}\"]`).value.trim();
+    const mark = div.querySelector(`input[name=\"mark_${idx+1}\"]`).value.trim();
+    const ans  = div.querySelector(`textarea[name=\"ans_${idx+1}\"]`).value.trim();
     return qno && mark && ans;
   });
   if (!hasOne) {
     return alert('Please fill at least one essay question (Question No., Mark, and Answer).');
   }
   DataManager.answerKey.essay = essayDivs.map((div, idx) => {
-    const qnoEl  = div.querySelector(`input[name="qno_${idx+1}"]`);
-    const markEl = div.querySelector(`input[name="mark_${idx+1}"]`);
-    const ansEl  = div.querySelector(`textarea[name="ans_${idx+1}"]`);
+    const qnoEl  = div.querySelector(`input[name=\"qno_${idx+1}\"]`);
+    const markEl = div.querySelector(`input[name=\"mark_${idx+1}\"]`);
+    const ansEl  = div.querySelector(`textarea[name=\"ans_${idx+1}\"]`);
     return {
       questionNo: qnoEl.value.trim(),
       mark: markEl.value.trim(),
@@ -211,7 +264,7 @@ function saveAnswerData() {
   document.querySelectorAll('#essay-answer-form input, #essay-answer-form textarea')
     .forEach(el => el.value = '');
 
-  // show notification
+  // notification
   let notif = document.getElementById('answer-notification');
   if (!notif) {
     notif = document.createElement('div');
@@ -219,11 +272,11 @@ function saveAnswerData() {
     document.getElementById('save-answers-btn')
       .insertAdjacentElement('afterend', notif);
   }
-  notif.textContent = 'All answers (objective and essay) have been saved successfully';
+  notif.textContent = 'All answers have been saved successfully';
   notif.style.color = 'green';
 }
 
-// --- Student DB & Marking ---
+// --- Student DB & Editor ---
 let editingIndex = null;
 
 function initDBEssaySection() {
@@ -246,9 +299,9 @@ function addDBEssaySet(qNo = '', answer = '') {
   `;
   container.appendChild(set);
 
-  const ta        = set.querySelector('.db-essay-text');
+  const ta = set.querySelector('.db-essay-text');
   const fileInput = set.querySelector('.db-essay-file');
-  const img       = set.querySelector('img');
+  const img = set.querySelector('img');
 
   ta.addEventListener('input', () => {
     fileInput.style.display = ta.value.trim() ? 'none' : '';
@@ -259,9 +312,9 @@ function addDBEssaySet(qNo = '', answer = '') {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-      img.src           = e.target.result;
+      img.src = e.target.result;
       img.style.display = '';
-      ta.style.display  = 'none';
+      ta.style.display = 'none';
     };
     reader.readAsDataURL(file);
   });
@@ -272,16 +325,13 @@ function addDBEssaySet(qNo = '', answer = '') {
 
 function bindStudentButtons() {
   const saveBtn = document.getElementById('save-student-btn');
-  // rename to "Add Student"
   saveBtn.textContent = 'Add Student';
-
   const updateBtn = document.createElement('button');
   updateBtn.id = 'update-student-btn';
   updateBtn.type = 'button';
   updateBtn.textContent = 'Update Student';
   updateBtn.style.display = 'none';
   saveBtn.insertAdjacentElement('afterend', updateBtn);
-
   saveBtn.addEventListener('click', saveStudentData);
   updateBtn.addEventListener('click', updateStudentData);
 }
@@ -303,8 +353,8 @@ async function saveStudentData() {
     return alert('Maximum of 250 students reached.');
   }
   const name = document.getElementById('db-student-name').value.trim();
-  const cls  = document.getElementById('db-student-class').value.trim();
-  const arm  = document.getElementById('db-student-arm').value.trim();
+  const cls = document.getElementById('db-student-class').value.trim();
+  const arm = document.getElementById('db-student-arm').value.trim();
   if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
@@ -317,7 +367,7 @@ async function saveStudentData() {
   for (const set of sets) {
     const qno = set.querySelector('.db-essay-qno').value.trim();
     if (!qno) return alert('Question number required for each essay answer');
-    const ta        = set.querySelector('.db-essay-text');
+    const ta = set.querySelector('.db-essay-text');
     const fileInput = set.querySelector('.db-essay-file');
     let ans = '';
     if (ta.style.display !== 'none' && ta.value.trim()) {
@@ -337,7 +387,7 @@ async function saveStudentData() {
   DataManager.students.push({
     name, class: cls, arm,
     objectiveAnswers: objArr,
-    essayAnswers:     essayData
+    essayAnswers: essayData
   });
   DataManager.saveStudents();
   updateStudentAnswerInfo();
@@ -352,6 +402,7 @@ function updateStudentAnswerInfo() {
   if (!DataManager.students.length) return;
 
   const tbl = document.createElement('table');
+  tbl.id = 'student-db-table';
   tbl.innerHTML = `
     <thead>
       <tr>
@@ -363,23 +414,21 @@ function updateStudentAnswerInfo() {
     </thead>
     <tbody>
       ${DataManager.students.map((s, i) => {
-        const obj = s.objectiveAnswers.join(',');
-        const essay = s.essayAnswers
-          .map(e => e.answer.startsWith('data:')
-            ? `<img src="${e.answer}" style="width:50px;height:50px;" />`
-            : e.answer
-          ).join(', ');
+        const obj = s.objectiveAnswers.join(', ');
+        const essay = s.essayAnswers.map(e => e.answer.startsWith('data:')
+          ? `<img src="${e.answer}" style="width:50px;height:50px;"/>`
+          : e.answer
+        ).join(', ');
         return `
-          <tr>
-            <td>${s.name}</td>
-            <td>${obj}</td>
-            <td>${essay}</td>
-            <td>
-              <button class="edit-student" data-index="${i}">Edit</button>
-              <button class="delete-student" data-index="${i}">Delete</button>
-            </td>
-          </tr>
-        `;
+        <tr>
+          <td>${s.name}</td>
+          <td>${obj}</td>
+          <td>${essay}</td>
+          <td>
+            <button class="edit-student" data-index="${i}">Edit</button>
+            <button class="delete-student" data-index="${i}">Delete</button>
+          </td>
+        </tr>`;
       }).join('')}
     </tbody>
   `;
@@ -400,6 +449,7 @@ function updateStudentAnswerInfo() {
 }
 
 function startEditStudent(idx) {
+  editingIndex = idx;
   const s = DataManager.students[idx];
   document.getElementById('db-student-name').value = s.name;
   document.getElementById('db-student-class').value = s.class;
@@ -407,16 +457,15 @@ function startEditStudent(idx) {
   document.getElementById('db-objective-answer').value = s.objectiveAnswers.join(',');
   document.getElementById('db-essay-form').innerHTML = '';
   s.essayAnswers.forEach(item => addDBEssaySet(item.questionNo, item.answer));
-  editingIndex = idx;
-  document.getElementById('save-student-btn').style.display   = 'none';
+  document.getElementById('save-student-btn').style.display = 'none';
   document.getElementById('update-student-btn').style.display = '';
 }
 
 async function updateStudentData() {
   if (editingIndex === null) return;
   const name = document.getElementById('db-student-name').value.trim();
-  const cls  = document.getElementById('db-student-class').value.trim();
-  const arm  = document.getElementById('db-student-arm').value.trim();
+  const cls = document.getElementById('db-student-class').value.trim();
+  const arm = document.getElementById('db-student-arm').value.trim();
   if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
@@ -428,7 +477,7 @@ async function updateStudentData() {
   for (const set of sets) {
     const qno = set.querySelector('.db-essay-qno').value.trim();
     if (!qno) return alert('Question number required');
-    const ta        = set.querySelector('.db-essay-text');
+    const ta = set.querySelector('.db-essay-text');
     const fileInput = set.querySelector('.db-essay-file');
     let ans = '';
     if (ta.style.display !== 'none' && ta.value.trim()) {
@@ -445,44 +494,39 @@ async function updateStudentData() {
     essayData.push({ questionNo: qno, answer: ans });
   }
 
-  DataManager.students[editingIndex] = {
-    name, class: cls, arm,
-    objectiveAnswers: objArr,
-    essayAnswers:     essayData
-  };
+  DataManager.students[editingIndex] = { name, class: cls, arm, objectiveAnswers: objArr, essayAnswers: essayData };
   DataManager.saveStudents();
   updateStudentAnswerInfo();
   alert('Student updated');
   document.getElementById('db-student-form').reset();
   initDBEssaySection();
   editingIndex = null;
-  document.getElementById('save-student-btn').style.display   = '';
+  document.getElementById('save-student-btn').style.display = '';
   document.getElementById('update-student-btn').style.display = 'none';
 }
 
-// --- Marking & Scores ---
+// --- Marking & Score Tabs ---
 let markingStudentIndex = null;
 let currentObjectiveScore = null;
 let currentEssayScore = null;
 
 function bindMarkingTab() {
-  document.getElementById('search-student-btn')
-    .addEventListener('click', searchStudentForMarking);
-  document.getElementById('populate-objective-btn')
-    .addEventListener('click', populateStudentObjectiveAnswers);
-  document.getElementById('mark-objective-btn')
-    .addEventListener('click', markObjectiveOnly);
-  document.getElementById('record-mark-btn')
-    .addEventListener('click', recordMark);
+  document.getElementById('search-student-btn').addEventListener('click', searchStudentForMarking);
+  document.getElementById('populate-objective-btn').addEventListener('click', populateStudentObjectiveAnswers);
+  document.getElementById('mark-objective-btn').addEventListener('click', markObjectiveOnly);
+  document.getElementById('sum-essay-btn').addEventListener('click', calculateEssayScore);
+  document.getElementById('record-mark-btn').addEventListener('click', recordMark);
+
+  document.getElementById('download-csv-btn').addEventListener('click', downloadCSV);
+  document.getElementById('download-xlsx-btn').addEventListener('click', downloadXLSX);
+  document.getElementById('download-pdf-btn').addEventListener('click', downloadPDF);
+  document.getElementById('download-doc-btn').addEventListener('click', downloadDOC);
 }
 
 function searchStudentForMarking() {
   const name = document.getElementById('search-student-input').value.trim().toLowerCase();
   const idx = DataManager.students.findIndex(s => s.name.toLowerCase() === name);
-  if (idx < 0) {
-    alert('Student not found');
-    return;
-  }
+  if (idx < 0) { alert('Student not found'); return; }
   markingStudentIndex = idx;
   const s = DataManager.students[idx];
   document.getElementById('mark-student-name').value = s.name;
@@ -494,153 +538,121 @@ function searchStudentForMarking() {
   document.getElementById('essay-scoring-details').textContent = '';
   currentObjectiveScore = null;
   currentEssayScore = null;
-  populateStudentEssaySection();
 }
 
 function populateStudentObjectiveAnswers() {
-  if (markingStudentIndex === null) {
-    alert('Please search and select a student first');
-    return;
-  }
+  if (markingStudentIndex === null) { alert('Please search and select a student first'); return; }
   const student = DataManager.students[markingStudentIndex];
   const form = document.getElementById('objective-marking-form');
   form.innerHTML = '';
-  for (let i = 1; i <= 50; i++) {
-    const val = student.objectiveAnswers[i - 1] || '';
-    const div = document.createElement('div');
-    div.innerHTML = `<label>Q${i}:</label><input type="text" name="obj_q_${i}" value="${val}" />`;
-    form.appendChild(div);
-  }
-  document.getElementById('objective-marking-details').textContent = '';
-  currentObjectiveScore = null;
+  form.classList.add('two-col-form');
+  student.objectiveAnswers.forEach((val, i) => {
+    if (val.trim()) {
+      const div = document.createElement('div');
+      div.innerHTML = `<label>Q${i+1}:</label><input type=\"text\" value=\"${val}\" readonly/>`;
+      form.appendChild(div);
+    }
+  });
 }
 
 function markObjectiveOnly() {
-  if (markingStudentIndex === null) {
-    alert('No student selected');
-    return;
-  }
+  if (markingStudentIndex === null) { alert('No student selected'); return; }
   const form = document.getElementById('objective-marking-form');
   const inputs = Array.from(form.querySelectorAll('input'));
   const key = DataManager.answerKey.objective;
   let correct = 0;
-  inputs.forEach((inp, idx) => {
-    const studAns = inp.value.trim().toLowerCase();
-    const keyObj = key.find(o => o.questionNo === idx + 1);
-    const correctAns = keyObj ? keyObj.answer.trim().toLowerCase() : '';
-    if (studAns && studAns === correctAns) correct++;
+  inputs.forEach(inp => {
+    const qno = Number(inp.previousSibling.textContent.slice(1, -1));
+    const keyObj = key.find(o => o.questionNo === qno);
+    if (keyObj && inp.value.trim().toLowerCase() === keyObj.answer.trim().toLowerCase()) correct++;
   });
   currentObjectiveScore = correct;
-  document.getElementById('objective-marking-details')
-    .textContent = `Objective Score: ${correct} / ${key.length}`;
+  document.getElementById('objective-marking-details').textContent = `Objective Score: ${correct} / ${key.length}`;
 }
 
 function populateStudentEssaySection() {
   const container = document.getElementById('essay-marking-container');
+  container.innerHTML = '';
   const key = DataManager.answerKey.essay;
   const student = DataManager.students[markingStudentIndex];
   const tbl = document.createElement('table');
   tbl.innerHTML = `
     <thead>
-      <tr>
-        <th>Teacher's Answer</th>
-        <th>Student's Answer</th>
-        <th>Marking Tools</th>
-      </tr>
+      <tr><th>Teacher's Answer</th><th>Student's Answer</th><th>Marking Tools</th></tr>
     </thead>
     <tbody>
-      ${key.map((k, i) => {
+      ${key.map(k => {
         const studAnsObj = student.essayAnswers.find(e => e.questionNo === k.questionNo) || {};
         const studAns = studAnsObj.answer || '';
         const studDisplay = studAns.startsWith('data:')
-          ? `<img src="${studAns}" style="width:100px;height:100px;" />`
+          ? `<img src="${studAns}" style="width:100px;height:100px;"/>`
           : studAns;
         return `
           <tr data-qno="${k.questionNo}" data-mark="${k.mark}">
             <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
-            <td>${studDisplay}</td>
+            <td>\${studDisplay}<div class="award-display"></div></td>
             <td>
               <button class="btn-correct">✓</button>
               <button class="btn-incorrect">✗</button>
               <button class="btn-custom">☆</button>
               <button class="btn-erase">🗑</button>
             </td>
-          </tr>
-        `;
+          </tr>`;
       }).join('')}
     </tbody>
   `;
   container.appendChild(tbl);
 
-  tbl.querySelectorAll('tr').forEach(row => {
-    const updateScore = () => {
-      let total = 0;
-      tbl.querySelectorAll('tr').forEach(r => {
-        const sc = parseFloat(r.dataset.score);
-        if (!isNaN(sc)) total += sc;
-      });
-      currentEssayScore = total;
-      document.getElementById('essay-scoring-details')
-        .textContent = `Essay Score: ${total}`;
-    };
-
+  tbl.querySelectorAll('tbody tr').forEach(row => {
     row.querySelector('.btn-correct').addEventListener('click', () => {
-      row.dataset.score = row.dataset.mark;
-      updateScore();
+      const mark = Number(row.dataset.mark);
+      row.dataset.score = mark;
+      row.querySelector('.award-display').textContent = mark;
     });
     row.querySelector('.btn-incorrect').addEventListener('click', () => {
       row.dataset.score = 0;
-      updateScore();
+      row.querySelector('.award-display').textContent = '0';
     });
     row.querySelector('.btn-custom').addEventListener('click', () => {
       if (row.querySelector('.custom-input')) return;
-      const inp = document.createElement('input');
-      inp.type = 'number';
-      inp.className = 'custom-input';
-      inp.placeholder = 'Mark';
-      const done = document.createElement('button');
-      done.textContent = 'Done';
+      const inp = document.createElement('input'); inp.type = 'number'; inp.className = 'custom-input'; inp.placeholder = 'Mark';
+      const done = document.createElement('button'); done.textContent = 'Done';
       done.addEventListener('click', () => {
-        const v = parseFloat(inp.value);
+        const v = Number(inp.value);
         if (!isNaN(v)) {
           row.dataset.score = v;
-          updateScore();
-          inp.remove();
-          done.remove();
+          row.querySelector('.award-display').textContent = v;
+          inp.remove(); done.remove();
         }
       });
       row.lastElementChild.append(inp, done);
     });
     row.querySelector('.btn-erase').addEventListener('click', () => {
       delete row.dataset.score;
-      updateScore();
+      row.querySelector('.award-display').textContent = '';
     });
   });
 }
 
+function calculateEssayScore() {
+  const rows = document.querySelectorAll('#essay-marking-container table tbody tr');
+  let total = 0;
+  rows.forEach(r => {
+    const sc = Number(r.dataset.score);
+    if (!isNaN(sc)) total += sc;
+  });
+  currentEssayScore = total;
+  const max = DataManager.answerKey.essay.reduce((s,e) => s + Number(e.mark || 0), 0);
+  document.getElementById('essay-scoring-details').textContent = `Essay Score: ${total} / ${max}`;
+}
+
 function recordMark() {
-  if (markingStudentIndex === null) {
-    alert('No student to record');
-    return;
-  }
-  if (currentObjectiveScore === null) {
-    alert('Please mark objective first');
-    return;
-  }
-  if (currentEssayScore === null) {
-    alert('Please mark essay first');
-    return;
-  }
+  if (markingStudentIndex === null) { alert('No student to record'); return; }
+  if (currentObjectiveScore === null) { alert('Please mark objective first'); return; }
+  if (currentEssayScore === null) { alert('Please mark essay first'); return; }
   const s = DataManager.students[markingStudentIndex];
   const total = currentObjectiveScore + currentEssayScore;
-  DataManager.scores.push({
-    name: s.name,
-    class: s.class,
-    arm: s.arm,
-    objective: currentObjectiveScore,
-    essay: currentEssayScore,
-    total
-  });
+  DataManager.scores.push({ name: s.name, class: s.class, arm: s.arm, objective: currentObjectiveScore, essay: currentEssayScore, total });
   DataManager.saveScores();
   updateScoreTable();
   document.getElementById('marking-notification').textContent = 'Mark recorded!';
@@ -676,5 +688,51 @@ function resetAllData() {
   location.reload();
 }
 
-window.addEventListener('DOMContentLoaded', () => DataManager.init());
+// --- Export functions ---
+function downloadCSV() {
+  const header = ['Name','Class','Arm','Objective','Essay','Total'];
+  const rows = DataManager.scores.map(r => [r.name, r.class, r.arm, r.objective, r.essay, r.total]);
+  const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'scores.csv';
+  link.click();
+}
 
+function downloadXLSX() {
+  const ws = XLSX.utils.json_to_sheet(DataManager.scores);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Scores');
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'scores.xlsx';
+  link.click();
+}
+
+function downloadPDF() {
+  if (!window.jspdf) return alert('PDF export library not loaded');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 10;
+  doc.text('Scores', 10, y); y += 10;
+  DataManager.scores.forEach(r => {
+    doc.text(`${r.name}, ${r.class}, ${r.arm}, ${r.objective}, ${r.essay}, ${r.total}`, 10, y);
+    y += 10;
+    if (y > 280) { doc.addPage(); y = 10; }
+  });
+  doc.save('scores.pdf');
+}
+
+function downloadDOC() {
+  const html = '<html><head><meta charset="utf-8" /></head><body>' +
+    document.getElementById('score-table').outerHTML +
+    '</body></html>';
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'scores.doc';
+  link.click();
+    }
