@@ -1,4 +1,3 @@
-ger.init());
 // script.js
 
 // --- Data Manager (uses localStorage) ---
