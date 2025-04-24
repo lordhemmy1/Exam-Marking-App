@@ -27,6 +27,7 @@ const DataManager = {
     bindClearStudentsButton();
     updateStudentAnswerInfo();
     updateScoreTable();
+    bindClearScoreButton();
 
     // marking & download bindings
     bindMarkingTab();
@@ -43,6 +44,14 @@ const DataManager = {
 
   saveScores() {
     localStorage.setItem('scoresDB', JSON.stringify(this.scores));
+  },
+
+  clearAll() {
+    localStorage.clear();
+    this.answerKey = { objective: [], essay: [] };
+    this.students = [];
+    this.scores = [];
+    location.reload();
   }
 };
 
@@ -649,6 +658,18 @@ function bindDownloadButton() {
   document.getElementById('download-score-btn')?.addEventListener('click', downloadScores);
 }
 
+function bindClearScoreButton() {
+  const btn = document.getElementById('clear-scores-btn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      if (!confirm('Clear all scores?')) return;
+      DataManager.scores = [];
+      DataManager.saveScores();
+      updateScoreTable();
+    });
+  }
+}
+
 function downloadScores() {
   const scores = DataManager.scores;
   if (!scores.length) { alert('No scores to download'); return; }
@@ -669,7 +690,6 @@ function downloadScores() {
     const doc = new jsPDF();
     let y = 10;
     doc.text('Scores', 10, y); y += 10;
-    // add table header row
     doc.text('Name | Class | Arm | Obj | Essay | Total', 10, y); y += 10;
     scores.forEach(r => {
       doc.text(`${r.name} | ${r.class} | ${r.arm} | ${r.objective} | ${r.essay} | ${r.total}`, 10, y);
@@ -709,17 +729,9 @@ function updateScoreTable() {
   });
 }
 
-function resetScores() {
-  if (!confirm('Clear all scores?')) return;
-  DataManager.scores = [];
-  DataManager.saveScores();
-  updateScoreTable();
-}
-
 function resetAllData() {
   if (!confirm('This will wipe EVERYTHING. Continue?')) return;
-  localStorage.clear();
-  location.reload();
+  DataManager.clearAll();
 }
 
 window.addEventListener('DOMContentLoaded', () => DataManager.init());
