@@ -26,9 +26,10 @@ const DataManager = {
     bindStudentButtons();
     bindClearStudentsButton();
     updateStudentAnswerInfo();
-    populateStudentSelect();
-    bindMarkingTabButtons();
     updateScoreTable();
+
+    // new marking tab bindings
+    bindMarkingTab();
   },
 
   saveAnswerKey() {
@@ -44,13 +45,6 @@ const DataManager = {
   }
 };
 
-// --- Temporary State ---
-let editingIndex = null;
-let currentStudent = null;
-let currentObjectiveScore = 0;
-let currentEssayScores = [];
-let currentEssayScore = 0;
-
 // --- Tab Navigation ---
 document.querySelectorAll('.tab-button').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -61,7 +55,7 @@ document.querySelectorAll('.tab-button').forEach(btn => {
   });
 });
 
-// --- Teacher's Answer Tab Customization ---
+// --- Answer Tab Customization ---
 function renameAnswerTab() {
   const btn = document.querySelector('.tab-button[data-tab="answer"]');
   if (btn) btn.textContent = "Teacher's Answer Tab";
@@ -79,8 +73,10 @@ function insertAnswerTabDescription() {
 function renderObjectiveKeyForm() {
   const c = document.getElementById('objective-answer-form');
   c.innerHTML = '';
+  c.classList.remove('two-columns');
   c.classList.add('two-col-form');
-  const count = Math.max(DataManager.answerKey.objective.length, 50);
+  const n = DataManager.answerKey.objective.length;
+  const count = Math.max(n, 50);
   for (let i = 1; i <= count; i++) {
     const existing = DataManager.answerKey.objective.find(o => Number(o.questionNo) === i);
     const ans = existing ? existing.answer : '';
@@ -96,9 +92,10 @@ function renderObjectiveKeyForm() {
 function renderEssayKeyForm() {
   const c = document.getElementById('essay-answer-form');
   c.innerHTML = '';
+  const saved = DataManager.answerKey.essay;
   const count = 20;
   for (let i = 1; i <= count; i++) {
-    const existing = DataManager.answerKey.essay[i - 1] || {};
+    const existing = saved[i - 1] || {};
     const qNo = existing.questionNo || '';
     const mark = existing.mark || '';
     const ans = existing.answer || '';
@@ -113,34 +110,122 @@ function renderEssayKeyForm() {
   }
 }
 
-// --- Bind Answer Save & Upload Handlers ---
+// --- Bind Teacher-Answer Save / Upload ---
 function bindAnswerSaveButton() {
   const btn = document.getElementById('save-answers-btn');
-  btn.textContent = 'Save Answers';
-  btn.addEventListener('click', saveAnswerData);
+  if (btn) {
+    btn.textContent = 'Save Answers';
+    btn.addEventListener('click', saveAnswerData);
+  }
 }
 
 function bindUploadHandlers() {
-  document.getElementById('upload-objective-answer')
-    .addEventListener('change', handleObjectiveUpload);
-  document.getElementById('upload-essay-answer')
-    .addEventListener('change', handleEssayUpload);
+  const objInput = document.getElementById('upload-objective-answer');
+  const essayInput = document.getElementById('upload-essay-answer');
+  if (objInput) objInput.addEventListener('change', handleObjectiveUpload);
+  if (essayInput) essayInput.addEventListener('change', handleEssayUpload);
 }
 
 // --- File Upload Parsers ---
 function handleObjectiveUpload(e) {
-  /* unchanged */
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const data = evt.target.result;
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    if (rows.length <= 1) return;
+    const dataRows = rows.slice(1);
+    DataManager.answerKey.objective = dataRows.map(r => ({
+      questionNo: Number(r[0]) || undefined,
+      answer: String(r[1] || '').trim()
+    }));
+    DataManager.saveAnswerKey();
+    renderObjectiveKeyForm();
+  };
+  reader.readAsArrayBuffer(file);
 }
+
 function handleEssayUpload(e) {
-  /* unchanged */
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const data = evt.target.result;
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    if (rows.length <= 1) return;
+    const dataRows = rows.slice(1).slice(0, 20);
+    DataManager.answerKey.essay = dataRows.map(r => ({
+      questionNo: String(r[0] || '').trim(),
+      mark: r[1] != null ? r[1] : '',
+      answer: String(r[2] || '').trim()
+    }));
+    DataManager.saveAnswerKey();
+    renderEssayKeyForm();
+  };
+  reader.readAsArrayBuffer(file);
 }
 
-// --- Save Teacher's Answers ---
+// --- Save Answers with Validation ---
 function saveAnswerData() {
-  /* unchanged */
+  // validate objective
+  const objInputs = Array.from(document.querySelectorAll('#objective-answer-form input'));
+  if (objInputs.every(i => !i.value.trim())) {
+    return alert('Please fill at least one objective answer before saving.');
+  }
+  DataManager.answerKey.objective = objInputs.map((i, idx) => ({
+    questionNo: idx + 1,
+    answer: i.value.trim()
+  }));
+
+  // validate essay
+  const essayDivs = Array.from(document.querySelectorAll('#essay-answer-form div'));
+  const hasOne = essayDivs.some((div, idx) => {
+    const qno  = div.querySelector(`input[name="qno_${idx+1}"]`).value.trim();
+    const mark = div.querySelector(`input[name="mark_${idx+1}"]`).value.trim();
+    const ans  = div.querySelector(`textarea[name="ans_${idx+1}"]`).value.trim();
+    return qno && mark && ans;
+  });
+  if (!hasOne) {
+    return alert('Please fill at least one essay question (Question No., Mark, and Answer).');
+  }
+  DataManager.answerKey.essay = essayDivs.map((div, idx) => {
+    const qnoEl  = div.querySelector(`input[name="qno_${idx+1}"]`);
+    const markEl = div.querySelector(`input[name="mark_${idx+1}"]`);
+    const ansEl  = div.querySelector(`textarea[name="ans_${idx+1}"]`);
+    return {
+      questionNo: qnoEl.value.trim(),
+      mark: markEl.value.trim(),
+      answer: ansEl.value.trim()
+    };
+  });
+
+  DataManager.saveAnswerKey();
+
+  // clear fields but keep stored data
+  objInputs.forEach(i => i.value = '');
+  document.querySelectorAll('#essay-answer-form input, #essay-answer-form textarea')
+    .forEach(el => el.value = '');
+
+  // show notification
+  let notif = document.getElementById('answer-notification');
+  if (!notif) {
+    notif = document.createElement('div');
+    notif.id = 'answer-notification';
+    document.getElementById('save-answers-btn')
+      .insertAdjacentElement('afterend', notif);
+  }
+  notif.textContent = 'All answers (objective and essay) have been saved successfully';
+  notif.style.color = 'green';
 }
 
-// --- Student Database Section ---
+// --- Student DB & Marking ---
+let editingIndex = null;
+
 function initDBEssaySection() {
   const c = document.getElementById('db-essay-form');
   c.innerHTML = '';
@@ -148,78 +233,154 @@ function initDBEssaySection() {
 }
 
 function addDBEssaySet(qNo = '', answer = '') {
-  /* unchanged */
+  const container = document.getElementById('db-essay-form');
+  const set = document.createElement('div');
+  set.className = 'db-essay-set';
+  set.innerHTML = `
+    <input type="text" class="db-essay-qno" value="${qNo}" placeholder="Q No" />
+    <textarea class="db-essay-text" placeholder="Answer text">${!answer.startsWith('data:') ? answer : ''}</textarea>
+    <input type="file" class="db-essay-file" accept="image/png, image/jpeg" />
+    <div class="db-essay-preview"><img style="width:100px;height:100px;display:none;" /></div>
+    <button type="button" class="db-essay-add">Continue</button>
+    <button type="button" class="db-essay-remove">Delete</button>
+  `;
+  container.appendChild(set);
+
+  const ta        = set.querySelector('.db-essay-text');
+  const fileInput = set.querySelector('.db-essay-file');
+  const img       = set.querySelector('img');
+
+  ta.addEventListener('input', () => {
+    fileInput.style.display = ta.value.trim() ? 'none' : '';
+  });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      img.src           = e.target.result;
+      img.style.display = '';
+      ta.style.display  = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  set.querySelector('.db-essay-add').addEventListener('click', () => addDBEssaySet());
+  set.querySelector('.db-essay-remove').addEventListener('click', () => set.remove());
 }
 
 function bindStudentButtons() {
   const saveBtn = document.getElementById('save-student-btn');
+  // rename to "Add Student"
   saveBtn.textContent = 'Add Student';
-  const updateBtn = document.getElementById('update-student-btn');
-  if (!updateBtn) {
-    const btn = document.createElement('button');
-    btn.id = 'update-student-btn';
-    btn.type = 'button';
-    btn.textContent = 'Update Student';
-    btn.style.display = 'none';
-    saveBtn.insertAdjacentElement('afterend', btn);
-  }
-  saveBtn.addEventListener('click', async () => {
-    await saveStudentData();
-    populateStudentSelect();
-  });
-  document.getElementById('update-student-btn').addEventListener('click', async () => {
-    await updateStudentData();
-    populateStudentSelect();
-  });
+
+  const updateBtn = document.createElement('button');
+  updateBtn.id = 'update-student-btn';
+  updateBtn.type = 'button';
+  updateBtn.textContent = 'Update Student';
+  updateBtn.style.display = 'none';
+  saveBtn.insertAdjacentElement('afterend', updateBtn);
+
+  saveBtn.addEventListener('click', saveStudentData);
+  updateBtn.addEventListener('click', updateStudentData);
 }
 
 function bindClearStudentsButton() {
-  document.getElementById('clear-students-btn')
-    .addEventListener('click', () => {
+  const btn = document.getElementById('clear-students-btn');
+  if (btn) {
+    btn.addEventListener('click', () => {
       if (!confirm('Clear all student records?')) return;
       DataManager.students = [];
       DataManager.saveStudents();
       updateStudentAnswerInfo();
-      populateStudentSelect();
     });
+  }
 }
 
 async function saveStudentData() {
-  /* unchanged except after saving: */
+  if (DataManager.students.length >= 250) {
+    return alert('Maximum of 250 students reached.');
+  }
+  const name = document.getElementById('db-student-name').value.trim();
+  const cls  = document.getElementById('db-student-class').value.trim();
+  const arm  = document.getElementById('db-student-arm').value.trim();
+  if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
+
+  const objRaw = document.getElementById('db-objective-answer').value.trim();
+  if (!objRaw) return alert('Objective answers required');
+  const objArr = objRaw.split(',').map(s => s.trim());
+
+  const sets = Array.from(document.querySelectorAll('.db-essay-set'));
+  if (!sets.length) return alert('At least one essay answer required');
+  const essayData = [];
+  for (const set of sets) {
+    const qno = set.querySelector('.db-essay-qno').value.trim();
+    if (!qno) return alert('Question number required for each essay answer');
+    const ta        = set.querySelector('.db-essay-text');
+    const fileInput = set.querySelector('.db-essay-file');
+    let ans = '';
+    if (ta.style.display !== 'none' && ta.value.trim()) {
+      ans = ta.value.trim();
+    } else if (fileInput.files.length) {
+      ans = await new Promise(res => {
+        const fr = new FileReader();
+        fr.onload = e => res(e.target.result);
+        fr.readAsDataURL(fileInput.files[0]);
+      });
+    } else {
+      return alert(`Provide text or upload image for essay Q${qno}`);
+    }
+    essayData.push({ questionNo: qno, answer: ans });
+  }
+
+  DataManager.students.push({
+    name, class: cls, arm,
+    objectiveAnswers: objArr,
+    essayAnswers:     essayData
+  });
   DataManager.saveStudents();
   updateStudentAnswerInfo();
-  // ...
+  alert('Student added');
+  document.getElementById('db-student-form').reset();
+  initDBEssaySection();
 }
 
 function updateStudentAnswerInfo() {
   const c = document.getElementById('student-db-reference');
   c.innerHTML = '';
   if (!DataManager.students.length) return;
+
   const tbl = document.createElement('table');
   tbl.innerHTML = `
     <thead>
       <tr>
         <th>Student Name</th>
-        <th>Objective Answer</th>
-        <th>Essay Answer</th>
+        <th>Objective Answers</th>
+        <th>Essay Answers</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      ${DataManager.students.map((s,i) => `
-        <tr>
-          <td>${s.name}</td>
-          <td>${s.objectiveAnswers.join(', ')}</td>
-          <td>${s.essayAnswers.map(e =>
-            e.answer.startsWith('data:')
-              ? `<img src="${e.answer}" style="width:50px;height:50px;"/>`
-              : e.answer
-          ).join('; ')}</td>
-          <td>
-            <button class="edit-student" data-index="${i}">Edit</button>
-            <button class="delete-student" data-index="${i}">Delete</button>
-          </td>
-        </tr>`).join('')}
+      ${DataManager.students.map((s, i) => {
+        const obj = s.objectiveAnswers.join(',');
+        const essay = s.essayAnswers
+          .map(e => e.answer.startsWith('data:')
+            ? `<img src="${e.answer}" style="width:50px;height:50px;" />`
+            : e.answer
+          ).join(', ');
+        return `
+          <tr>
+            <td>${s.name}</td>
+            <td>${obj}</td>
+            <td>${essay}</td>
+            <td>
+              <button class="edit-student" data-index="${i}">Edit</button>
+              <button class="delete-student" data-index="${i}">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('')}
     </tbody>
   `;
   c.appendChild(tbl);
@@ -234,185 +395,257 @@ function updateStudentAnswerInfo() {
       DataManager.students.splice(idx, 1);
       DataManager.saveStudents();
       updateStudentAnswerInfo();
-      populateStudentSelect();
     })
   );
 }
 
 function startEditStudent(idx) {
-  /* unchanged */
+  const s = DataManager.students[idx];
+  document.getElementById('db-student-name').value = s.name;
+  document.getElementById('db-student-class').value = s.class;
+  document.getElementById('db-student-arm').value = s.arm;
+  document.getElementById('db-objective-answer').value = s.objectiveAnswers.join(',');
+  document.getElementById('db-essay-form').innerHTML = '';
+  s.essayAnswers.forEach(item => addDBEssaySet(item.questionNo, item.answer));
+  editingIndex = idx;
+  document.getElementById('save-student-btn').style.display   = 'none';
+  document.getElementById('update-student-btn').style.display = '';
 }
 
 async function updateStudentData() {
-  /* unchanged */
+  if (editingIndex === null) return;
+  const name = document.getElementById('db-student-name').value.trim();
+  const cls  = document.getElementById('db-student-class').value.trim();
+  const arm  = document.getElementById('db-student-arm').value.trim();
+  if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
+
+  const objRaw = document.getElementById('db-objective-answer').value.trim();
+  if (!objRaw) return alert('Objective answers required');
+  const objArr = objRaw.split(',').map(s => s.trim());
+
+  const sets = Array.from(document.querySelectorAll('.db-essay-set'));
+  const essayData = [];
+  for (const set of sets) {
+    const qno = set.querySelector('.db-essay-qno').value.trim();
+    if (!qno) return alert('Question number required');
+    const ta        = set.querySelector('.db-essay-text');
+    const fileInput = set.querySelector('.db-essay-file');
+    let ans = '';
+    if (ta.style.display !== 'none' && ta.value.trim()) {
+      ans = ta.value.trim();
+    } else if (fileInput.files.length) {
+      ans = await new Promise(res => {
+        const fr = new FileReader();
+        fr.onload = e => res(e.target.result);
+        fr.readAsDataURL(fileInput.files[0]);
+      });
+    } else {
+      return alert(`Provide answer for essay Q${qno}`);
+    }
+    essayData.push({ questionNo: qno, answer: ans });
+  }
+
+  DataManager.students[editingIndex] = {
+    name, class: cls, arm,
+    objectiveAnswers: objArr,
+    essayAnswers:     essayData
+  };
+  DataManager.saveStudents();
+  updateStudentAnswerInfo();
+  alert('Student updated');
+  document.getElementById('db-student-form').reset();
+  initDBEssaySection();
+  editingIndex = null;
+  document.getElementById('save-student-btn').style.display   = '';
+  document.getElementById('update-student-btn').style.display = 'none';
 }
 
-// --- Populate Student Select for Marking ---
-function populateStudentSelect() {
-  const select = document.getElementById('mark-student-select');
-  if (!select) return;
-  select.innerHTML = '<option value="">Select student</option>';
-  DataManager.students.forEach((s, idx) => {
-    const opt = document.createElement('option');
-    opt.value = idx;
-    opt.textContent = s.name;
-    select.appendChild(opt);
-  });
-}
+// --- Marking & Scores ---
+let markingStudentIndex = null;
+let currentObjectiveScore = null;
+let currentEssayScore = null;
 
-// --- Marking Tab ---
-function bindMarkingTabButtons() {
-  const select = document.getElementById('mark-student-select');
-  select.addEventListener('change', () => {
-    const idx = select.value;
-    if (idx === '') {
-      alert('Please select a student');
-      return;
-    }
-    const stud = DataManager.students[idx];
-    if (!stud) {
-      alert('Student not found');
-      return;
-    }
-    currentStudent = stud;
-    fillMarkingInfo();
-  });
-
+function bindMarkingTab() {
+  document.getElementById('search-student-btn')
+    .addEventListener('click', searchStudentForMarking);
   document.getElementById('populate-objective-btn')
-    .addEventListener('click', () => {
-      if (!currentStudent) return alert('Select a student first');
-      populateObjectiveMarkingForm();
-    });
-
+    .addEventListener('click', populateStudentObjectiveAnswers);
   document.getElementById('mark-objective-btn')
     .addEventListener('click', markObjectiveOnly);
-
-  document.getElementById('essay-marking-form').addEventListener('click', handleEssayMarkingClick);
+  document.getElementById('record-mark-btn')
+    .addEventListener('click', recordMark);
 }
 
-function fillMarkingInfo() {
-  document.getElementById('mark-student-name').value = currentStudent.name;
-  document.getElementById('mark-student-class').value = currentStudent.class;
-  document.getElementById('mark-student-arm').value = currentStudent.arm;
-  // clear previous
+function searchStudentForMarking() {
+  const name = document.getElementById('search-student-input').value.trim().toLowerCase();
+  const idx = DataManager.students.findIndex(s => s.name.toLowerCase() === name);
+  if (idx < 0) {
+    alert('Student not found');
+    return;
+  }
+  markingStudentIndex = idx;
+  const s = DataManager.students[idx];
+  document.getElementById('mark-student-name').value = s.name;
+  document.getElementById('mark-student-class').value = s.class;
+  document.getElementById('mark-student-arm').value = s.arm;
   document.getElementById('objective-marking-form').innerHTML = '';
   document.getElementById('objective-marking-details').textContent = '';
-  document.querySelector('#essay-marking-form tbody').innerHTML = '';
-  document.getElementById('essay-marking-details').textContent = '';
-  currentObjectiveScore = 0;
-  currentEssayScores = [];
-  currentEssayScore = 0;
+  document.getElementById('essay-marking-container').innerHTML = '';
+  document.getElementById('essay-scoring-details').textContent = '';
+  currentObjectiveScore = null;
+  currentEssayScore = null;
+  populateStudentEssaySection();
 }
 
-function populateObjectiveMarkingForm() {
-  const container = document.getElementById('objective-marking-form');
-  container.innerHTML = '';
-  const teacherLen = DataManager.answerKey.objective.length;
-  const studentLen = currentStudent.objectiveAnswers.length;
-  let count = Math.max(50, teacherLen, studentLen);
-  count = Math.min(count, 100);
-  for (let i = 1; i <= count; i++) {
-    const studAns = currentStudent.objectiveAnswers[i - 1] || '';
-    const div = document.createElement('div');
-    div.innerHTML = `
-      <label>Q${i}:</label>
-      <input type="text" name="mark_q_${i}" value="${studAns}" />
-    `;
-    container.appendChild(div);
+function populateStudentObjectiveAnswers() {
+  if (markingStudentIndex === null) {
+    alert('Please search and select a student first');
+    return;
   }
+  const student = DataManager.students[markingStudentIndex];
+  const form = document.getElementById('objective-marking-form');
+  form.innerHTML = '';
+  for (let i = 1; i <= 50; i++) {
+    const val = student.objectiveAnswers[i - 1] || '';
+    const div = document.createElement('div');
+    div.innerHTML = `<label>Q${i}:</label><input type="text" name="obj_q_${i}" value="${val}" />`;
+    form.appendChild(div);
+  }
+  document.getElementById('objective-marking-details').textContent = '';
+  currentObjectiveScore = null;
 }
 
 function markObjectiveOnly() {
-  if (!currentStudent) return alert('Select a student first');
-  const inputs = Array.from(document.querySelectorAll('#objective-marking-form input'));
-  const teacher = DataManager.answerKey.objective.map(o => o.answer.trim());
-  currentObjectiveScore = 0;
-  teacher.forEach((ans, idx) => {
-    const stud = (inputs[idx]?.value || '').trim();
-    if (stud.toLowerCase() === ans.toLowerCase()) {
-      currentObjectiveScore++;
-    }
+  if (markingStudentIndex === null) {
+    alert('No student selected');
+    return;
+  }
+  const form = document.getElementById('objective-marking-form');
+  const inputs = Array.from(form.querySelectorAll('input'));
+  const key = DataManager.answerKey.objective;
+  let correct = 0;
+  inputs.forEach((inp, idx) => {
+    const studAns = inp.value.trim().toLowerCase();
+    const keyObj = key.find(o => o.questionNo === idx + 1);
+    const correctAns = keyObj ? keyObj.answer.trim().toLowerCase() : '';
+    if (studAns && studAns === correctAns) correct++;
   });
-  document.getElementById('objective-marking-details').textContent =
-    `Objective Score: ${currentObjectiveScore} / ${teacher.length}`;
+  currentObjectiveScore = correct;
+  document.getElementById('objective-marking-details')
+    .textContent = `Objective Score: ${correct} / ${key.length}`;
 }
 
-function handleEssayMarkingClick(e) {
-  const tr = e.target.closest('tr');
-  if (!tr || !tr.dataset.idx) return;
-  const idx = +tr.dataset.idx;
-  const teacherMark = Number(DataManager.answerKey.essay[idx].mark) || 0;
+function populateStudentEssaySection() {
+  const container = document.getElementById('essay-marking-container');
+  const key = DataManager.answerKey.essay;
+  const student = DataManager.students[markingStudentIndex];
+  const tbl = document.createElement('table');
+  tbl.innerHTML = `
+    <thead>
+      <tr>
+        <th>Teacher's Answer</th>
+        <th>Student's Answer</th>
+        <th>Marking Tools</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${key.map((k, i) => {
+        const studAnsObj = student.essayAnswers.find(e => e.questionNo === k.questionNo) || {};
+        const studAns = studAnsObj.answer || '';
+        const studDisplay = studAns.startsWith('data:')
+          ? `<img src="${studAns}" style="width:100px;height:100px;" />`
+          : studAns;
+        return `
+          <tr data-qno="${k.questionNo}" data-mark="${k.mark}">
+            <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
+            <td>${studDisplay}</td>
+            <td>
+              <button class="btn-correct">✓</button>
+              <button class="btn-incorrect">✗</button>
+              <button class="btn-custom">☆</button>
+              <button class="btn-erase">🗑</button>
+            </td>
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  `;
+  container.appendChild(tbl);
 
-  if (e.target.classList.contains('essay-correct')) {
-    currentEssayScores[idx] = teacherMark;
-  } else if (e.target.classList.contains('essay-incorrect')) {
-    currentEssayScores[idx] = 0;
-  } else if (e.target.classList.contains('essay-custom-btn')) {
-    tr.querySelector('.essay-custom-input').style.display = '';
-    tr.querySelector('.essay-custom-done').style.display = '';
-  } else if (e.target.classList.contains('essay-custom-done')) {
-    const val = Number(tr.querySelector('.essay-custom-input').value) || 0;
-    currentEssayScores[idx] = val;
-    tr.querySelector('.essay-custom-input').style.display = 'none';
-    tr.querySelector('.essay-custom-done').style.display = 'none';
-  } else if (e.target.classList.contains('essay-erase')) {
-    currentEssayScores[idx] = 0;
-  } else return;
+  tbl.querySelectorAll('tr').forEach(row => {
+    const updateScore = () => {
+      let total = 0;
+      tbl.querySelectorAll('tr').forEach(r => {
+        const sc = parseFloat(r.dataset.score);
+        if (!isNaN(sc)) total += sc;
+      });
+      currentEssayScore = total;
+      document.getElementById('essay-scoring-details')
+        .textContent = `Essay Score: ${total}`;
+    };
 
-  currentEssayScore = currentEssayScores.reduce((a, b) => a + (b || 0), 0);
-  document.getElementById('essay-marking-details').textContent =
-    `Essay Score: ${currentEssayScore}`;
-}
-
-function populateEssayMarkingSection() {
-  const tbody = document.querySelector('#essay-marking-form tbody');
-  tbody.innerHTML = '';
-  DataManager.answerKey.essay.forEach((t, idx) => {
-    const tr = document.createElement('tr');
-    tr.dataset.idx = idx;
-    const stud = currentStudent.essayAnswers.find(e => e.questionNo === t.questionNo) || {};
-    const studHTML = stud.answer && stud.answer.startsWith('data:')
-      ? `<img src="${stud.answer}" style="width:75px;"/>`
-      : `<div>${stud.answer || ''}</div>`;
-    tr.innerHTML = `
-      <td>${t.questionNo}</td>
-      <td>${t.mark}</td>
-      <td>${t.answer}</td>
-      <td>${studHTML}</td>
-      <td>
-        <button type="button" class="essay-correct">✓</button>
-        <button type="button" class="essay-incorrect">✕</button>
-        <button type="button" class="essay-custom-btn">✎</button>
-        <input type="number" class="essay-custom-input" style="width:50px;display:none;"/>
-        <button type="button" class="essay-custom-done" style="display:none;">✔</button>
-        <button type="button" class="essay-erase">⎌</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-    currentEssayScores[idx] = 0;
+    row.querySelector('.btn-correct').addEventListener('click', () => {
+      row.dataset.score = row.dataset.mark;
+      updateScore();
+    });
+    row.querySelector('.btn-incorrect').addEventListener('click', () => {
+      row.dataset.score = 0;
+      updateScore();
+    });
+    row.querySelector('.btn-custom').addEventListener('click', () => {
+      if (row.querySelector('.custom-input')) return;
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.className = 'custom-input';
+      inp.placeholder = 'Mark';
+      const done = document.createElement('button');
+      done.textContent = 'Done';
+      done.addEventListener('click', () => {
+        const v = parseFloat(inp.value);
+        if (!isNaN(v)) {
+          row.dataset.score = v;
+          updateScore();
+          inp.remove();
+          done.remove();
+        }
+      });
+      row.lastElementChild.append(inp, done);
+    });
+    row.querySelector('.btn-erase').addEventListener('click', () => {
+      delete row.dataset.score;
+      updateScore();
+    });
   });
-  document.getElementById('essay-marking-details').textContent = `Essay Score: 0`;
 }
 
 function recordMark() {
-  if (!currentStudent) return alert('Complete marking first');
-  if (!document.querySelector('#essay-marking-form tbody').childElementCount) {
-    populateEssayMarkingSection();
+  if (markingStudentIndex === null) {
+    alert('No student to record');
+    return;
   }
+  if (currentObjectiveScore === null) {
+    alert('Please mark objective first');
+    return;
+  }
+  if (currentEssayScore === null) {
+    alert('Please mark essay first');
+    return;
+  }
+  const s = DataManager.students[markingStudentIndex];
+  const total = currentObjectiveScore + currentEssayScore;
   DataManager.scores.push({
-    name: currentStudent.name,
-    class: currentStudent.class,
-    arm: currentStudent.arm,
+    name: s.name,
+    class: s.class,
+    arm: s.arm,
     objective: currentObjectiveScore,
     essay: currentEssayScore,
-    total: currentObjectiveScore + currentEssayScore
+    total
   });
   DataManager.saveScores();
   updateScoreTable();
-  alert('Marks recorded');
+  document.getElementById('marking-notification').textContent = 'Mark recorded!';
 }
 
-// --- Score Tab Logic ---
 function updateScoreTable() {
   const tbody = document.querySelector('#score-table tbody');
   tbody.innerHTML = '';
@@ -444,3 +677,4 @@ function resetAllData() {
 }
 
 window.addEventListener('DOMContentLoaded', () => DataManager.init());
+
