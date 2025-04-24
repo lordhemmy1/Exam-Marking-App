@@ -18,13 +18,14 @@ nav {
   justify-content: center;
   background: #e0e0e0;
   border-bottom: 1px solid #ccc;
+  padding: 1rem; /* added padding */
 }
 .tab-button {
   padding: 1rem 2rem;
   cursor: pointer;
   background: #ccc;
   border: none;
-  margin: 0 0.25rem;
+  margin: 0 0.5rem; /* increased margin */
   transition: background 0.3s;
 }
 .tab-button.active {
@@ -48,20 +49,24 @@ h3, h4 {
   color: #333;
 }
 form {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem; /* increased bottom margin */
+  padding: 1rem; /* added padding */
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 form div {
   margin-bottom: 1rem;
 }
 label {
   display: inline-block;
-  width: 80px;
+  width: 100px; /* increased width for spacing */
   font-weight: 500;
 }
 input[type="text"],
 input[type="number"],
 textarea {
-  padding: 0.5rem;
+  padding: 0.75rem; /* increased padding */
   border: 1px solid #ccc;
   border-radius: 5px;
   width: 300px;
@@ -69,15 +74,16 @@ textarea {
 }
 textarea {
   width: 100%;
-  height: 60px;
+  height: 80px; /* increased height */
 }
 button {
-  padding: 0.5rem 1.25rem;
+  padding: 0.75rem 1.5rem; /* increased padding */
   background: #007bff;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  margin-right: 0.5rem; /* spacing between buttons */
 }
 button:hover {
   background: #0056b3;
@@ -89,32 +95,32 @@ button:hover {
   font-style: italic;
 }
 
-/* Style all file-upload buttons: deep green background with light green text */
+/* File‐upload button styling */
 input[type="file"] {
-  background-color: #006400;     /* deep green */
-  color: #90ee90;                /* light green text */
+  background-color: #adff2f;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
+  margin-bottom: 1rem; /* spacing below upload */
 }
 
-/* Two-column layout */
+/* Two‐column layout */
 .two-col-form {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem 1rem;
+  gap: 1rem 2rem; /* increased gap */
 }
 
 /* Score Table */
 #score-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1.5rem;
+  margin-top: 2rem; /* increased margin */
 }
 #score-table th,
 #score-table td {
   border: 1px solid #ccc;
-  padding: 0.75rem;
+  padding: 1rem; /* increased padding */
   text-align: center;
 }
 #score-table th {
@@ -133,10 +139,10 @@ input[type="file"] {
   flex: 1;
 }
 
-/* Essay-group in Students Database */
+/* Essay‐group in Students Database */
 .essay-group {
   border: 1px solid #ccc;
-  padding: 1rem;
+  padding: 1.5rem; /* increased padding */
   margin-bottom: 1rem;
   border-radius: 5px;
 }
@@ -160,7 +166,7 @@ input[type="file"] {
 #student-db-table th,
 #student-db-table td {
   border: 1px solid #ccc;
-  padding: 0.5rem;
+  padding: 0.75rem; /* increased padding */
 }
 #student-db-table th {
   background: #007bff;
@@ -170,32 +176,39 @@ input[type="file"] {
   background: #f9f9f9;
 }
 
-/* Clear-DB button styling */
-#db-student-form > button {
-  background: #dc3545;
+/* Clear & Reset buttons styling (brick red) */
+#clear-students-btn,
+#clear-scores-btn,
+#reset-all-btn { /* assume reset-all has this ID */
+  background: #b22222; /* brick red */
 }
-#db-student-form > button:hover {
-  background: #c82333;
+#clear-students-btn:hover,
+#clear-scores-btn:hover,
+#reset-all-btn:hover {
+  background: #8b1a1a; /* darker brick red */
 }
 
-/* Reset All Data button styling: deep red */
-#reset-all-btn {
-  background: #8B0000;  /* deep red */
-  color: white;
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+/* Reset‐DB button styling */
+#db-student-form > button {
+  background: #b22222; /* brick red */
 }
-#reset-all-btn:hover {
-  background: #700000;
+#db-student-form > button:hover {
+  background: #8b1a1a;
 }
 
 @media (max-width: 600px) {
-  nav { flex-direction: column; }
-  .tab-button { width: 100%; }
+  nav {
+    flex-direction: column;
+  }
+  .tab-button {
+    width: 100%;
+  }
   input[type="text"],
   input[type="number"],
-  textarea { width: 100%; }
-  .score-controls { flex-direction: column; }
+  textarea {
+    width: 100%;
+  }
+  .score-controls {
+    flex-direction: column;
+  }
 }
