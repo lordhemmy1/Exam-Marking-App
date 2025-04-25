@@ -94,7 +94,7 @@ function renderObjectiveKeyForm() {
   toShow.forEach(o => {
     const div = document.createElement('div');
     div.innerHTML = `<label>Q${o.questionNo}:</label>
-                     <input type="text" name="q_${o.questionNo}" value="${o.answer}" />`;
+                     <input class="form-control" type="text" name="q_${o.questionNo}" value="${o.answer}" />`;
     c.appendChild(div);
   });
 }
@@ -110,9 +110,9 @@ function renderEssayKeyForm() {
     const div = document.createElement('div');
     div.innerHTML = `
       <label>Set ${i + 1}:</label>
-      <input type="text" name="qno_${i + 1}" placeholder="Question No." value="${e.questionNo}" />
-      <input type="number" name="mark_${i + 1}" placeholder="Mark allotted" value="${e.mark}" />
-      <textarea name="ans_${i + 1}" placeholder="Correct answer">${e.answer}</textarea>
+      <input class="form-control" type="text" name="qno_${i + 1}" placeholder="Question No." value="${e.questionNo}" />
+      <input class="form-control" type="number" name="mark_${i + 1}" placeholder="Mark allotted" value="${e.mark}" />
+      <textarea class="form-control" name="ans_${i + 1}" placeholder="Correct answer">${e.answer}</textarea>
     `;
     c.appendChild(div);
   });
@@ -122,6 +122,7 @@ function renderEssayKeyForm() {
 function bindAnswerSaveButton() {
   const btn = document.getElementById('save-answers-btn');
   btn.textContent = 'Save Answers';
+  btn.classList.add('btn','btn-primary','mt-2');
   btn.addEventListener('click', saveAnswerData);
 }
 function bindUploadHandlers() {
@@ -234,14 +235,14 @@ function initDBEssaySection() {
 function addDBEssaySet(qNo = '', answer = '') {
   const container = document.getElementById('db-essay-form');
   const set = document.createElement('div');
-  set.className = 'db-essay-set';
+  set.className = 'db-essay-set mb-2';
   set.innerHTML = `
-    <input type="text" class="db-essay-qno" value="${qNo}" placeholder="Q No" />
-    <textarea class="db-essay-text" placeholder="Answer text">${answer}</textarea>
-    <input type="file" class="db-essay-file" accept="image/png, image/jpeg" />
-    <div class="db-essay-preview"><img style="width:100px;height:100px;display:none;" /></div>
-    <button type="button" class="db-essay-add">Continue</button>
-    <button type="button" class="db-essay-remove">Delete</button>
+    <input class="form-control mb-1" type="text" class="db-essay-qno" value="${qNo}" placeholder="Q No" />
+    <textarea class="form-control mb-1" class="db-essay-text" placeholder="Answer text">${answer}</textarea>
+    <input class="form-control-file mb-1" type="file" class="db-essay-file" accept="image/png, image/jpeg" />
+    <div class="db-essay-preview mb-1"><img style="width:100px;height:100px;display:none;" /></div>
+    <button class="btn btn-sm btn-secondary db-essay-add">Continue</button>
+    <button class="btn btn-sm btn-danger db-essay-remove">Delete</button>
   `;
   container.appendChild(set);
 
@@ -278,41 +279,35 @@ function setupLevelRadios() {
   const radios = document.querySelectorAll('input[name="level"]');
   const classSelect = document.getElementById('db-student-class');
   const armInput = document.getElementById('db-student-arm');
-  armInput.placeholder =
-    'Enter Arm e.g Science, Business, Humanity, Microbiology';
 
-  radios.forEach(r =>
-    r.addEventListener('change', () => {
-      classSelect.innerHTML = '<option value="">Select Class</option>';
-      levels[r.value].forEach(opt => {
-        const o = document.createElement('option');
-        o.value = opt;
-        o.textContent = opt;
-        classSelect.appendChild(o);
-      });
-      localStorage.setItem('selectedLevel', r.value);
-    })
-  );
-
-  // restore
-  const saved = localStorage.getItem('selectedLevel');
-  if (saved && levels[saved]) {
-    document.querySelector(`input[name="level"][value="${saved}"]`).checked = true;
-    levels[saved].forEach(opt => {
-      const o = document.createElement('option');
-      o.value = opt;
-      o.textContent = opt;
-      classSelect.appendChild(o);
-    });
-    const sel = localStorage.getItem('db-student-class');
-    if (sel) classSelect.value = sel;
+  // restore saved level
+  const savedLevel = localStorage.getItem('selectedLevel');
+  if (savedLevel) {
+    document.querySelector(`input[name="level"][value="${savedLevel}"]`).checked = true;
+    populateClassOptions(savedLevel);
   }
+
+  radios.forEach(r => {
+    r.addEventListener('change', () => {
+      localStorage.setItem('selectedLevel', r.value);
+      populateClassOptions(r.value);
+    });
+  });
+
+  function populateClassOptions(level) {
+    classSelect.innerHTML = '<option value="">Select Class</option>';
+    levels[level].forEach(opt => classSelect.add(new Option(opt, opt)));
+  }
+
+  // persist class select and arm input
   classSelect.addEventListener('change', () => {
     localStorage.setItem('db-student-class', classSelect.value);
   });
   armInput.addEventListener('input', () => {
     localStorage.setItem('db-student-arm', armInput.value);
   });
+  const savedClass = localStorage.getItem('db-student-class');
+  if (savedClass) classSelect.value = savedClass;
   const savedArm = localStorage.getItem('db-student-arm');
   if (savedArm) armInput.value = savedArm;
 }
@@ -320,27 +315,34 @@ function setupLevelRadios() {
 function bindStudentButtons() {
   const saveBtn = document.getElementById('save-student-btn');
   saveBtn.textContent = 'Add Student';
-  const updateBtn = document.getElementById('update-student-btn') || (() => {
-    const btn = document.createElement('button');
-    btn.id = 'update-student-btn';
-    btn.type = 'button';
-    btn.textContent = 'Update Student';
-    btn.style.display = 'none';
-    saveBtn.insertAdjacentElement('afterend', btn);
-    return btn;
-  })();
+  saveBtn.classList.add('btn','btn-success','mr-2');
+  const updateBtn =
+    document.getElementById('update-student-btn') ||
+    (() => {
+      const btn = document.createElement('button');
+      btn.id = 'update-student-btn';
+      btn.type = 'button';
+      btn.textContent = 'Update Student';
+      btn.classList.add('btn','btn-primary');
+      btn.style.display = 'none';
+      saveBtn.insertAdjacentElement('afterend', btn);
+      return btn;
+    })();
 
+  updateBtn.classList.add('ml-2');
   saveBtn.addEventListener('click', saveStudentData);
   updateBtn.addEventListener('click', updateStudentData);
 }
 
 function bindClearStudentsButton() {
-  document.getElementById('clear-students-btn')?.addEventListener('click', () => {
-    if (!confirm('Clear all student records?')) return;
-    DataManager.students = [];
-    DataManager.saveStudents();
-    updateStudentAnswerInfo();
-  });
+  document
+    .getElementById('clear-students-btn')
+    ?.addEventListener('click', () => {
+      if (!confirm('Clear all student records?')) return;
+      DataManager.students = [];
+      DataManager.saveStudents();
+      updateStudentAnswerInfo();
+    });
 }
 
 async function saveStudentData() {
@@ -379,7 +381,13 @@ async function saveStudentData() {
     essayData.push({ questionNo: qno, answer: ans });
   }
 
-  DataManager.students.push({ name, class: cls, arm, objectiveAnswers: objArr, essayAnswers: essayData });
+  DataManager.students.push({
+    name,
+    class: cls,
+    arm,
+    objectiveAnswers: objArr,
+    essayAnswers: essayData
+  });
   DataManager.saveStudents();
   updateStudentAnswerInfo();
   alert('Student added');
@@ -393,8 +401,9 @@ function updateStudentAnswerInfo() {
   if (!DataManager.students.length) return;
   const tbl = document.createElement('table');
   tbl.id = 'student-db-table';
+  tbl.classList.add('table','table-striped','mt-3');
   tbl.innerHTML = `
-    <thead>
+    <thead class="thead-dark">
       <tr>
         <th>Name</th><th>Class</th><th>Arm</th>
         <th>Objective Answers</th><th>Essay Answers</th><th>Actions</th>
@@ -419,8 +428,8 @@ function updateStudentAnswerInfo() {
             <td>${obj}</td>
             <td>${essay}</td>
             <td>
-              <button class="edit-student" data-index="${i}">Edit</button>
-              <button class="delete-student" data-index="${i}">Delete</button>
+              <button class="btn btn-sm btn-info edit-student" data-index="${i}">Edit</button>
+              <button class="btn btn-sm btn-danger delete-student" data-index="${i}">Delete</button>
             </td>
           </tr>`;
         })
@@ -512,31 +521,34 @@ let currentEssayScore = null;
 let currentMarkIndex = -1;
 
 function bindMarkingTab() {
-  const searchLabel = document.querySelector('label[for="search-student-input"]');
-  if (searchLabel) searchLabel.textContent = 'Search Student';
-  document.getElementById('search-student-btn')?.addEventListener('click', searchStudentForMarking);
-  document.getElementById('populate-objective-btn')?.addEventListener('click', populateStudentObjectiveAnswers);
-  document.getElementById('mark-objective-btn')?.addEventListener('click', markObjectiveOnly);
-  document.getElementById('sum-essay-btn')?.addEventListener('click', sumEssayMarks);
-
+  const searchBtn = document.getElementById('search-student-btn');
+  const nextBtn   = document.getElementById('mark-next-btn');
   const recordBtn = document.getElementById('record-mark-btn');
-  recordBtn?.addEventListener('click', () => {
+
+  searchBtn.classList.add('btn','btn-primary','mr-2');
+  nextBtn.classList.add('btn','btn-secondary','mr-2');
+  recordBtn.classList.add('btn','btn-success');
+
+  searchBtn.addEventListener('click', searchStudentForMarking);
+  nextBtn.addEventListener('click', markNextStudent);
+
+  recordBtn.addEventListener('click', () => {
+    const name = document.getElementById('mark-student-name').value;
+    if (DataManager.scores.some(r => r.name === name)) {
+      return alert('Student has already been marked and recorded');
+    }
     recordMark();
     setTimeout(() => {
       document.getElementById('marking-notification').textContent = '';
     }, 2000);
   });
-
-  document.getElementById('mark-next-btn')?.addEventListener('click', markNextStudent);
 }
 
 function searchStudentForMarking() {
   const name = document.getElementById('search-student-input').value.trim().toLowerCase();
   const idx = DataManager.students.findIndex(s => s.name.toLowerCase() === name);
-  if (idx < 0) {
-    alert('Student not found');
-    return;
-  }
+  if (!DataManager.students.length) return alert('No Record Found');
+  if (idx < 0) return alert('Student Not Found');
   markingStudentIndex = idx;
   const s = DataManager.students[idx];
   document.getElementById('mark-student-name').value = s.name;
@@ -551,9 +563,10 @@ function searchStudentForMarking() {
 }
 
 function markNextStudent() {
-  if (!DataManager.students.length) return;
+  if (!DataManager.students.length) return alert('No Record Found');
   currentMarkIndex = (currentMarkIndex + 1) % DataManager.students.length;
   const s = DataManager.students[currentMarkIndex];
+  if (!s) return alert('No Record Found');
   document.getElementById('search-student-input').value = s.name;
   searchStudentForMarking();
   if (DataManager.scores.length === DataManager.students.length) {
@@ -571,7 +584,7 @@ function populateStudentObjectiveAnswers() {
   answers.forEach(o => {
     const div = document.createElement('div');
     div.innerHTML = `<label>Q${o.questionNo}:</label>
-                     <input type="text" name="obj_q_${o.questionNo}" value="${o.answer}" readonly />`;
+                     <input class="form-control" type="text" name="obj_q_${o.questionNo}" value="${o.answer}" readonly />`;
     form.appendChild(div);
   });
   currentObjectiveScore = null;
@@ -602,8 +615,9 @@ function populateStudentEssaySection() {
   const key = DataManager.answerKey.essay;
   const student = DataManager.students[markingStudentIndex];
   const tbl = document.createElement('table');
+  tbl.classList.add('table','table-bordered','mt-3');
   tbl.innerHTML = `
-    <thead>
+    <thead class="thead-light">
       <tr>
         <th>Teacher's Answer</th>
         <th>Student's Answer</th>
@@ -623,10 +637,10 @@ function populateStudentEssaySection() {
             <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
             <td>${studDisplay}</td>
             <td>
-              <button class="btn-correct">✓</button>
-              <button class="btn-incorrect">✕</button>
-              <button class="btn-custom">✎</button>
-              <button class="btn-erase">⎌</button>
+              <button class="btn btn-sm btn-success btn-correct">✓</button>
+              <button class="btn btn-sm btn-danger btn-incorrect">✕</button>
+              <button class="btn btn-sm btn-warning btn-custom">✎</button>
+              <button class="btn btn-sm btn-secondary btn-erase">⎌</button>
             </td>
           </tr>`;
         })
@@ -657,10 +671,11 @@ function populateStudentEssaySection() {
       if (row.querySelector('.custom-input')) return;
       const inp = document.createElement('input');
       inp.type = 'number';
-      inp.className = 'custom-input';
+      inp.className = 'custom-input form-control form-control-sm d-inline-block w-auto ml-2';
       inp.placeholder = 'Mark';
       const done = document.createElement('button');
       done.textContent = 'Done';
+      done.className = 'btn btn-sm btn-primary ml-1';
       done.addEventListener('click', () => {
         const v = parseFloat(inp.value);
         if (!isNaN(v)) {
@@ -720,7 +735,7 @@ function bindDownloadButton() {
 }
 function bindClearScoreButton() {
   document.getElementById('clear-scores-btn')?.addEventListener('click', () => {
-    if (!confirm('Clear all scores?')) return;
+    if (!confirm('Clear only the scores?')) return;
     DataManager.scores = [];
     DataManager.saveScores();
     updateScoreTable();
@@ -805,3 +820,4 @@ function resetAllData() {
 }
 
 window.addEventListener('DOMContentLoaded', () => DataManager.init());
+
