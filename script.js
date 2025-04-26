@@ -655,17 +655,18 @@ function populateStudentEssaySection() {
           const studDisplay = studAns.startsWith('data:')
             ? `<img src="${studAns}" style="width:100px;height:100px;"/>`
             : studAns;
-          return `
-          <tr data-qno="${k.questionNo}" data-mark="${k.mark}">
-            <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
-            <td>${studDisplay}</td>
-            <td>
-              <button class="btn-correct">?</button>
-              <button class="btn-incorrect">?</button>
-              <button class="btn-custom">?</button>
-              <button class="btn-erase">?</button>
-            </td>
-          </tr>`;
+          // inside populateStudentEssaySection(), in the `.map(…)` HTML template:
+return `
+  <tr data-qno="${k.questionNo}" data-mark="${k.mark}">
+    <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
+    <td>${studDisplay}</td>
+    <td>
+      <button class="btn-correct">✔️</button>
+      <button class="btn-incorrect">✖️</button>
+      <button class="btn-custom">✏️</button>
+      <button class="btn-erase">🧽</button>
+    </td>
+  </tr>`;
         })
         .join('')}
     </tbody>`;
