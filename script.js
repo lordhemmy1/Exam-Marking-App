@@ -1,81 +1,257 @@
 // script.js
 
-// --- Data Manager (uses localStorage) --- const MAX_STUDENTS = 300; const DataManager = { answerKey: { objective: [], essay: [] }, students: [], scores: [],
+// --- Data Manager (uses localStorage) ---
+const MAX_STUDENTS = 300;
 
-init() { // load persisted data const ak = localStorage.getItem('answerKey'); const sd = localStorage.getItem('studentsDB'); const sc = localStorage.getItem('scoresDB'); if (ak) this.answerKey = JSON.parse(ak); if (sd) this.students = JSON.parse(sd); if (sc) this.scores = JSON.parse(sc);
+const DataManager = {
+  answerKey: { objective: [], essay: [] },
+  students: [],
+  scores: [],
 
-// initialize UI
-renameAnswerTab();
-insertAnswerTabDescription();
-renderObjectiveKeyForm();
-renderEssayKeyForm();
-bindAnswerSaveButton();
-bindUploadHandlers();
-initDBEssaySection();
-setupLevelRadios();
-bindStudentButtons();
-bindClearStudentsButton();
-updateStudentAnswerInfo();
-updateScoreTable();
-bindClearScoreButton();
-bindMarkingTab();
-bindDownloadButton();
+  init() {
+    // load persisted data
+    const ak = localStorage.getItem('answerKey');
+    const sd = localStorage.getItem('studentsDB');
+    const sc = localStorage.getItem('scoresDB');
+    if (ak) this.answerKey = JSON.parse(ak);
+    if (sd) this.students = JSON.parse(sd);
+    if (sc) this.scores = JSON.parse(sc);
 
-},
+    // initialize UI
+    renameAnswerTab();
+    insertAnswerTabDescription();
+    renderObjectiveKeyForm();
+    renderEssayKeyForm();
+    bindAnswerSaveButton();
+    bindUploadHandlers();
+    initDBEssaySection();
+    setupLevelRadios();
+    bindStudentButtons();
+    bindClearStudentsButton();
+    updateStudentAnswerInfo();
+    updateScoreTable();
+    bindClearScoreButton();
+    bindMarkingTab();
+    bindDownloadButton();
+  },
 
-saveAnswerKey() { localStorage.setItem('answerKey', JSON.stringify(this.answerKey)); },
+  saveAnswerKey() {
+    localStorage.setItem('answerKey', JSON.stringify(this.answerKey));
+  },
 
-saveStudents() { this.students.sort((a, b) => a.name.localeCompare(b.name)); localStorage.setItem('studentsDB', JSON.stringify(this.students)); },
+  saveStudents() {
+    // sort alphabetically
+    this.students.sort((a, b) => a.name.localeCompare(b.name));
+    localStorage.setItem('studentsDB', JSON.stringify(this.students));
+  },
 
-saveScores() { localStorage.setItem('scoresDB', JSON.stringify(this.scores)); },
+  saveScores() {
+    localStorage.setItem('scoresDB', JSON.stringify(this.scores));
+  },
 
-clearAll() { localStorage.clear(); this.answerKey = { objective: [], essay: [] }; this.students = []; this.scores = []; location.reload(); } };
+  clearAll() {
+    localStorage.clear();
+    this.answerKey = { objective: [], essay: [] };
+    this.students = [];
+    this.scores = [];
+    location.reload();
+  }
+};
 
-// --- Tab Navigation --- document.querySelectorAll('.tab-button').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active')); btn.classList.add('active'); document.getElementById(btn.dataset.tab).classList.add('active'); }); });
+// --- Tab Navigation ---
+document.querySelectorAll('.tab-button').forEach(btn =>
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  })
+);
 
-// --- Teacher's Answer Tab --- function renameAnswerTab() { const btn = document.querySelector('.tab-button[data-tab="answer"]'); if (btn) btn.textContent = "Teacher's Answer Tab"; }
+// --- Teacher's Answer Tab ---
+function renameAnswerTab() {
+  const btn = document.querySelector('.tab-button[data-tab="answer"]');
+  if (btn) btn.textContent = "Teacher's Answer Tab";
+}
+function insertAnswerTabDescription() {
+  const section = document.getElementById('answer');
+  const desc = document.createElement('p');
+  desc.textContent =
+    'Upload or manually type your objective answers into the objective form section and the essay section.';
+  desc.style.fontSize = '1rem';
+  section.insertBefore(desc, document.getElementById('objective-answer-container'));
+}
 
-function insertAnswerTabDescription() { const section = document.getElementById('answer'); const desc = document.createElement('p'); desc.textContent = 'Upload or manually type your objective answers into the objective form section and the essay section.'; desc.style.fontSize = '1rem'; section.insertBefore(desc, document.getElementById('objective-answer-container')); }
+// --- Teacher's Answer Tab: updated renderObjectiveKeyForm ---
+function renderObjectiveKeyForm() {
+  const c = document.getElementById('objective-answer-form');
+  c.innerHTML = '';
+  c.classList.add('two-col-form');
 
-// --- Render Answer Forms (with totals) --- function renderObjectiveKeyForm() { const c = document.getElementById('objective-answer-form'); c.innerHTML = ''; c.classList.add('two-col-form');
+  // get only populated entries (non‐empty answers)
+  const entries = DataManager.answerKey.objective;
+  const populated = entries.filter(o => o.answer.trim() !== '');
+  // if none, still show 50 blanks
+  const toShow = populated.length
+    ? entries
+    : Array.from({ length: 50 }, (_, i) => ({ questionNo: i + 1, answer: '' }));
 
-const entries = DataManager.answerKey.objective; const populated = entries.filter(o => o.answer.trim() !== ''); const toShow = populated.length ? entries : Array.from({ length: 50 }, (_, i) => ({ questionNo: i + 1, answer: '' }));
+  toShow.forEach(o => {
+    const div = document.createElement('div');
+    div.innerHTML = `<label>Q${o.questionNo}:</label>
+                     <input type="text" name="q_${o.questionNo}"
+                            value="${o.answer}" />`;
+    c.appendChild(div);
+  });
 
-toShow.forEach(o => { const div = document.createElement('div'); div.innerHTML = <label>Q${o.questionNo}:</label> <input type="text" name="q_${o.questionNo}" value="${o.answer}" />; c.appendChild(div); });
+  // update and show total count
+  const totalEl = document.getElementById('objective-key-total');
+  const count = populated.length;
+  if (count > 0) {
+    totalEl.textContent = `Total Objective Marks: ${count}`;
+    totalEl.style.display = '';
+  } else {
+    totalEl.style.display = 'none';
+  }
+}
 
-// update total container const totalEl = document.getElementById('objective-key-total'); if (populated.length) { totalEl.textContent = Total Marks: ${populated.length}; totalEl.style.display = 'block'; } else { totalEl.style.display = 'none'; } }
+// --- Teacher's Answer Tab: updated renderEssayKeyForm ---
+function renderEssayKeyForm() {
+  const c = document.getElementById('essay-answer-form');
+  c.innerHTML = '';
 
-function renderEssayKeyForm() { const c = document.getElementById('essay-answer-form'); c.innerHTML = '';
+  const entries = DataManager.answerKey.essay;
+  const populated = entries.filter(e => e.questionNo && e.mark !== '');
+  const toShow = populated.length
+    ? entries
+    : Array.from({ length: 20 }, (_, i) => ({ questionNo: '', mark: '', answer: '' }));
 
-const entries = DataManager.answerKey.essay; const populated = entries.filter(e => e.questionNo && e.mark !== ''); const toShow = populated.length ? entries : Array.from({ length: 20 }, (_, i) => ({ questionNo: '', mark: '', answer: '' }));
+  toShow.forEach((e, i) => {
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <label>Set ${e.questionNo || i + 1}:</label>
+      <input type="text"   name="qno_${i + 1}"  placeholder="Question No." value="${e.questionNo}" />
+      <input type="number" name="mark_${i + 1}" placeholder="Mark allotted"  value="${e.mark}" />
+      <textarea name="ans_${i + 1}" placeholder="Correct answer">${e.answer}</textarea>
+    `;
+    c.appendChild(div);
+  });
 
-toShow.forEach((e, i) => { const div = document.createElement('div'); div.innerHTML = <label>Set ${e.questionNo || i + 1}:</label> <input type="text" name="qno_${i+1}" placeholder="Question No." value="${e.questionNo}" /> <input type="number" name="mark_${i+1}" placeholder="Mark allotted" value="${e.mark}" /> <textarea name="ans_${i+1}" placeholder="Correct answer">${e.answer}</textarea>; c.appendChild(div); });
+  // sum up all the marks
+  const totalEl = document.getElementById('essay-key-total');
+  const sum = populated.reduce((s, e) => s + Number(e.mark), 0);
+  if (populated.length) {
+    totalEl.textContent = `Total Essay Marks: ${sum}`;
+    totalEl.style.display = '';
+  } else {
+    totalEl.style.display = 'none';
+  }
+}
 
-// update total container const totalEl = document.getElementById('essay-key-total'); if (populated.length) { const sum = populated.reduce((s, e) => s + Number(e.mark), 0); totalEl.textContent = Total Essay Marks: ${sum}; totalEl.style.display = 'block'; } else { totalEl.style.display = 'none'; } }
+// --- Bind Answer Save & Upload ---
+function bindAnswerSaveButton() {
+  const btn = document.getElementById('save-answers-btn');
+  btn.textContent = 'Save Answers';
+  btn.addEventListener('click', saveAnswerData);
+}
+function bindUploadHandlers() {
+  document
+    .getElementById('upload-objective-answer')
+    ?.addEventListener('change', handleObjectiveUpload);
+  document
+    .getElementById('upload-essay-answer')
+    ?.addEventListener('change', handleEssayUpload);
+}
 
-// --- Bind Answer Save & Upload --- function bindAnswerSaveButton() { const btn = document.getElementById('save-answers-btn'); btn.textContent = 'Save Answers'; btn.addEventListener('click', saveAnswerData); }
+// --- File Upload Parsers ---
+function handleObjectiveUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    const data = evt.target.result;
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    if (rows.length <= 1) return;
+    DataManager.answerKey.objective = rows.slice(1).map(r => ({
+      questionNo: Number(r[0]) || undefined,
+      answer: String(r[1] || '').trim()
+    }));
+    DataManager.saveAnswerKey();
+    renderObjectiveKeyForm();
+  };
+  reader.readAsArrayBuffer(file);
+}
+function handleEssayUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    const data = evt.target.result;
+    const wb = XLSX.read(data, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    if (rows.length <= 1) return;
+    DataManager.answerKey.essay = rows.slice(1, 21).map(r => ({
+      questionNo: String(r[0] || '').trim(),
+      mark: r[1] != null ? r[1] : '',
+      answer: String(r[2] || '').trim()
+    }));
+    DataManager.saveAnswerKey();
+    renderEssayKeyForm();
+  };
+  reader.readAsArrayBuffer(file);
+}
 
-function bindUploadHandlers() { document.getElementById('upload-objective-answer')?.addEventListener('change', handleObjectiveUpload); document.getElementById('upload-essay-answer')?.addEventListener('change', handleEssayUpload); }
+// --- Save Answer Data ---
+function saveAnswerData() {
+  const objInputs = Array.from(
+    document.querySelectorAll('#objective-answer-form input')
+  );
+  if (objInputs.every(i => !i.value.trim())) {
+    return alert('Please fill at least one objective answer before saving.');
+  }
+  DataManager.answerKey.objective = objInputs.map((i, idx) => ({
+    questionNo: idx + 1,
+    answer: i.value.trim()
+  }));
 
-// --- File Upload Parsers --- function handleObjectiveUpload(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = evt => { const wb = XLSX.read(evt.target.result, { type: 'array' }); const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); if (rows.length <= 1) return; DataManager.answerKey.objective = rows.slice(1).map(r => ({ questionNo: Number(r[0]) || undefined, answer: String(r[1] || '').trim() })); DataManager.saveAnswerKey(); renderObjectiveKeyForm(); }; reader.readAsArrayBuffer(file); }
+  const essayDivs = Array.from(
+    document.querySelectorAll('#essay-answer-form div')
+  );
+  const hasOne = essayDivs.some((div, idx) => {
+    const q = div.querySelector(`[name="qno_${idx + 1}"]`).value.trim();
+    const m = div.querySelector(`[name="mark_${idx + 1}"]`).value.trim();
+    const a = div.querySelector(`[name="ans_${idx + 1}"]`).value.trim();
+    return q && m && a;
+  });
+  if (!hasOne) {
+    return alert(
+      'Please fill at least one essay question (Question No., Mark, and Answer).'
+    );
+  }
+  DataManager.answerKey.essay = essayDivs.map((div, idx) => ({
+    questionNo: div.querySelector(`[name="qno_${idx + 1}"]`).value.trim(),
+    mark: div.querySelector(`[name="mark_${idx + 1}"]`).value.trim(),
+    answer: div.querySelector(`[name="ans_${idx + 1}"]`).value.trim()
+  }));
 
-function handleEssayUpload(e) { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = evt => { const wb = XLSX.read(evt.target.result, { type: 'array' }); const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); if (rows.length <= 1) return; DataManager.answerKey.essay = rows.slice(1,21).map(r => ({ questionNo: String(r[0] || '').trim(), mark: r[1] != null ? r[1] : '', answer: String(r[2] || '').trim() })); DataManager.saveAnswerKey(); renderEssayKeyForm(); }; reader.readAsArrayBuffer(file); }
+  DataManager.saveAnswerKey();
+  objInputs.forEach(i => (i.value = ''));
+  document
+    .querySelectorAll('#essay-answer-form input, #essay-answer-form textarea')
+    .forEach(el => (el.value = ''));
 
-// --- Save Answer Data --- function saveAnswerData() { const objInputs = Array.from(document.querySelectorAll('#objective-answer-form input')); if (objInputs.every(i => !i.value.trim())) { return alert('Please fill at least one objective answer before saving.'); } DataManager.answerKey.objective = objInputs.map((i, idx) => ({ questionNo: idx + 1, answer: i.value.trim() }));
-
-const essayDivs = Array.from(document.querySelectorAll('#essay-answer-form div')); const essays = essayDivs.map((div, idx) => ({ questionNo: div.querySelector([name="qno_${idx+1}"]).value.trim(), mark: div.querySelector([name="mark_${idx+1}"]).value.trim(), answer: div.querySelector([name="ans_${idx+1}"]).value.trim() })).filter(e => e.questionNo && e.mark && e.answer);
-
-if (!essays.length) { return alert('Please fill at least one essay question (Question No., Mark, and Answer).'); } DataManager.answerKey.essay = essays;
-
-DataManager.saveAnswerKey(); renderObjectiveKeyForm(); renderEssayKeyForm();
-
-alert('All answers saved successfully'); }
-
-// ... rest of original js code unchanged ...
-
-// filler lines to maintain 814 lines " + Array(600).fill("// filler").join(" "))}
-
-
+  let notif = document.getElementById('answer-notification');
+  if (!notif) {
+    notif = document.createElement('div');
+    notif.id = 'answer-notification';
+    document.getElementById('save-answers-btn').insertAdjacentElement('afterend', notif);
+  }
+  notif.textContent = 'All answers saved successfully';
+  notif.style.color = 'green';
+}
 
 // --- Students Database ---
 let editingIndex = null;
