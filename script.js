@@ -283,7 +283,6 @@ function setupLevelRadios() {
 
   radios.forEach(r =>
     r.addEventListener('change', () => {
-    	localStorage.setItem('selectedLevel', r.value);
       classSelect.innerHTML = '<option value="">Select Class</option>';
       levels[r.value].forEach(opt => {
         const o = document.createElement('option');
@@ -559,9 +558,7 @@ function searchStudentForMarking() {
 }
 
 function markNextStudent() {
-  if (!DataManager.students.length) {
-  return alert('No Record Found');
-}
+  if (!DataManager.students.length) return;
   currentMarkIndex = (currentMarkIndex + 1) % DataManager.students.length;
   const s = DataManager.students[currentMarkIndex];
   document.getElementById('search-student-input').value = s.name;
@@ -703,10 +700,6 @@ function sumEssayMarks() {
 }
 
 function recordMark() {
-	const already = DataManager.scores.some(r => r.name === DataManager.students[markingStudentIndex].name);
-if (already) {
-  return alert('Student has already been marked and recorded');
-}
   if (markingStudentIndex === null) return alert('No student to record');
   if (currentObjectiveScore === null) return alert('Please mark objective first');
   if (currentEssayScore === null) return alert('Please sum essay first');
@@ -733,12 +726,13 @@ function bindDownloadButton() {
   document.getElementById('download-score-btn')?.addEventListener('click', downloadScores);
 }
 function bindClearScoreButton() {
-  document.getElementById('clear-scores-btn').addEventListener('click', () => {
-  if (!confirm('Clear all scores?')) return;
-  DataManager.scores = [];
-  DataManager.saveScores();
-  updateScoreTable();
-});
+  document.getElementById('clear-scores-btn')?.addEventListener('click', () => {
+    if (!confirm('Clear all scores?')) return;
+    DataManager.scores = [];
+    DataManager.saveScores();
+    updateScoreTable();
+  });
+}
 
 function downloadScores() {
   const scores = DataManager.scores;
@@ -817,4 +811,4 @@ function resetAllData() {
   DataManager.clearAll();
 }
 
-window.addEventListener('DOMContentLoaded', () => DataManager.init());window.addEventListener('DOMContentLoaded', () => DataManager.init());
+window.addEventListener('DOMContentLoaded', () => DataManager.init());
