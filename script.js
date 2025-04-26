@@ -1,5 +1,3 @@
-// script.js
-
 // --- Data Manager (uses localStorage) ---
 const MAX_STUDENTS = 300;
 
@@ -150,9 +148,22 @@ function handleObjectiveUpload(e) {
     }));
     DataManager.saveAnswerKey();
     renderObjectiveKeyForm();
+
+    // —— NEW: display total objective items parsed ——
+    const objSection = document.getElementById('objective-answer-container');
+    let totalDiv = objSection.querySelector('.objective-total');
+    if (!totalDiv) {
+      totalDiv = document.createElement('div');
+      totalDiv.className = 'objective-total';
+      totalDiv.style.margin = '0.5em 0';
+      objSection.insertBefore(totalDiv, document.getElementById('save-answers-btn'));
+    }
+    totalDiv.textContent = `Total Objective Items Parsed: ${DataManager.answerKey.objective.length}`;
+    totalDiv.style.color = '#0066cc';
   };
   reader.readAsArrayBuffer(file);
 }
+
 function handleEssayUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -170,6 +181,20 @@ function handleEssayUpload(e) {
     }));
     DataManager.saveAnswerKey();
     renderEssayKeyForm();
+
+    // —— NEW: compute & display total essay marks ——
+    const essaySection = document.getElementById('essay-answer-container');
+    let essayTotalDiv = essaySection.querySelector('.essay-total');
+    if (!essayTotalDiv) {
+      essayTotalDiv = document.createElement('div');
+      essayTotalDiv.className = 'essay-total';
+      essayTotalDiv.style.margin = '0.5em 0';
+      essaySection.insertBefore(essayTotalDiv, document.getElementById('save-answers-btn'));
+    }
+    const sumMarks = DataManager.answerKey.essay
+      .reduce((acc, e) => acc + (Number(e.mark) || 0), 0);
+    essayTotalDiv.textContent = `Total Essay Marks Parsed: ${sumMarks}`;
+    essayTotalDiv.style.color = '#0066cc';
   };
   reader.readAsArrayBuffer(file);
 }
@@ -294,18 +319,14 @@ function setupLevelRadios() {
     })
   );
 
-// restore on load (moved from init)
-const savedLevel = localStorage.getItem('selectedLevel');
-if (savedLevel) {
-  const radio = document.querySelector(`input[name="level"][value="${savedLevel}"]`);
-  if (radio) radio.checked = true;
-}
+  const savedLevel = localStorage.getItem('selectedLevel');
+  if (savedLevel) {
+    const radio = document.querySelector(`input[name="level"][value="${savedLevel}"]`);
+    if (radio) radio.checked = true;
+  }
 
-  // restore
-  const saved = localStorage.getItem('selectedLevel');
-  if (saved && levels[saved]) {
-    document.querySelector(`input[name="level"][value="${saved}"]`).checked = true;
-    levels[saved].forEach(opt => {
+  if (savedLevel && levels[savedLevel]) {
+    levels[savedLevel].forEach(opt => {
       const o = document.createElement('option');
       o.value = opt;
       o.textContent = opt;
@@ -314,6 +335,7 @@ if (savedLevel) {
     const sel = localStorage.getItem('db-student-class');
     if (sel) classSelect.value = sel;
   }
+
   classSelect.addEventListener('change', () => {
     localStorage.setItem('db-student-class', classSelect.value);
   });
@@ -354,7 +376,7 @@ async function saveStudentData() {
   if (DataManager.students.length >= MAX_STUDENTS) {
     return alert(`Maximum of ${MAX_STUDENTS} students reached.`);
   }
-  const name = document.getElementById('db-student-name').value.trim();
+  const name = document.getElementById('db-student-name')->value.trim();
   const cls = document.getElementById('db-student-class').value.trim();
   const arm = document.getElementById('db-student-arm').value.trim();
   if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
@@ -630,10 +652,10 @@ function populateStudentEssaySection() {
             <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
             <td>${studDisplay}</td>
             <td>
-              <button class="btn-correct">?</button>
-              <button class="btn-incorrect">?</button>
-              <button class="btn-custom">?</button>
-              <button class="btn-erase">?</button>
+              <button class="btn-correct">✔️</button>
+              <button class="btn-incorrect">❌</button>
+              <button class="btn-custom">✏️</button>
+              <button class="btn-erase">🗑️</button>
             </td>
           </tr>`;
         })
