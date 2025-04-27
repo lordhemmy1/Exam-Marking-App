@@ -6,36 +6,41 @@ const MAX_STUDENTS = 300;
 // ---- image compression helper ----
 async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 500) {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    const fr = new FileReader();
-    fr.onerror = () => reject(new Error('Failed to read file'));
-    fr.onload = e => (img.src = e.target.result);
-    fr.readAsDataURL(file);
+    if (!(file instanceof File)) {
+      return reject(new Error('Not a File object'));
+    }
 
-    img.onerror = () => reject(new Error('Invalid image file'));
-    img.onload = () => {
-      // resize to fit within maxWidth × maxHeight
-      let { width: w, height: h } = img;
-      if (w > h && w > maxWidth)      { h *= maxWidth / w; w = maxWidth; }
-      else if (h > w && h > maxHeight) { w *= maxHeight / h; h = maxHeight; }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('FileReader failed'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Invalid image data'));
+      img.onload = () => {
+        try {
+          let { width: w, height: h } = img;
+          if (w > h && w > maxWidth)      { h *= maxWidth / w; w = maxWidth; }
+          else if (h > w && h > maxHeight) { w *= maxHeight / h; h = maxHeight; }
 
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
 
-      // progressively reduce quality until under maxKB
-      let quality = 0.9;
-      let dataUrl, kb;
-      do {
-        dataUrl = canvas.toDataURL('image/jpeg', quality);
-        kb = (dataUrl.length * 3/4) / 1024;
-        if (kb <= maxKB || quality <= 0.1) break;
-        quality -= 0.05;
-      } while (true);
+          let quality = 0.9, dataUrl, sizeKB;
+          do {
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+            sizeKB = (dataUrl.length * 3/4) / 1024;
+            if (sizeKB <= maxKB || quality <= 0.1) break;
+            quality -= 0.05;
+          } while (true);
 
-      resolve(dataUrl);
+          resolve(dataUrl);
+        } catch (err) {
+          reject(new Error('Canvas processing error: ' + err.message));
+        }
+      };
+      img.src = reader.result;
     };
+    reader.readAsDataURL(file);
   });
 }
 
@@ -124,7 +129,7 @@ function renderObjectiveKeyForm() {
   c.innerHTML = '';
   c.classList.add('two-col-form');
 
-  // get only populated entries (non‐empty answers)
+  // get only populated entries (non?empty answers)
   const entries = DataManager.answerKey.objective;
   const populated = entries.filter(o => o.answer.trim() !== '');
   // if none, still show 50 blanks
@@ -320,16 +325,25 @@ function addDBEssaySet(qNo = '', answer = '') {
     img.style.display = ta.value.trim() ? 'none' : img.style.display;
   });
   fileInput.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      img.src = e.target.result;
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  // attempt compress
+  compressToMaxSize(file)
+    .then(dataUrl => {
+      img.src = dataUrl;
       img.style.display = '';
       ta.style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-  });
+      // stash compressed image for saveStudentData
+      fileInput.dataset.dataurl = dataUrl;
+    })
+    // <— HERE’S THE .catch to alert the user of any error:
+    .catch(err => {
+      alert('Image processing error: ' + err.message);
+      fileInput.value = '';   // clear the invalid file so they can retry
+    });
+});
+
 
   set.querySelector('.db-essay-add').addEventListener('click', () => addDBEssaySet());
   set.querySelector('.db-essay-remove').addEventListener('click', () => set.remove());
@@ -691,16 +705,16 @@ function populateStudentEssaySection() {
           const studDisplay = studAns.startsWith('data:')
             ? `<img src="${studAns}" style="width:100px;height:100px;"/>`
             : studAns;
-          // inside populateStudentEssaySection(), in the `.map(…)` HTML template:
+          // inside populateStudentEssaySection(), in the `.map(?)` HTML template:
 return `
   <tr data-qno="${k.questionNo}" data-mark="${k.mark}">
     <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
     <td>${studDisplay}</td>
     <td>
-      <button class="btn-correct">✔️</button>
-      <button class="btn-incorrect">✖️</button>
-      <button class="btn-custom">✏️</button>
-      <button class="btn-erase">🧽</button>
+      <button class="btn-correct">??</button>
+      <button class="btn-incorrect">??</button>
+      <button class="btn-custom">??</button>
+      <button class="btn-erase">??</button>
     </td>
   </tr>`;
         })
