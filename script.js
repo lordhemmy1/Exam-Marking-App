@@ -3,6 +3,42 @@
 // --- Data Manager (uses localStorage) ---
 const MAX_STUDENTS = 300;
 
+// ---- image compression helper ----
+async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 500) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('Failed to read file'));
+    fr.onload = e => (img.src = e.target.result);
+    fr.readAsDataURL(file);
+
+    img.onerror = () => reject(new Error('Invalid image file'));
+    img.onload = () => {
+      // resize to fit within maxWidth × maxHeight
+      let { width: w, height: h } = img;
+      if (w > h && w > maxWidth)      { h *= maxWidth / w; w = maxWidth; }
+      else if (h > w && h > maxHeight) { w *= maxHeight / h; h = maxHeight; }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+      // progressively reduce quality until under maxKB
+      let quality = 0.9;
+      let dataUrl, kb;
+      do {
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+        kb = (dataUrl.length * 3/4) / 1024;
+        if (kb <= maxKB || quality <= 0.1) break;
+        quality -= 0.05;
+      } while (true);
+
+      resolve(dataUrl);
+    };
+  });
+}
+
 const DataManager = {
   answerKey: { objective: [], essay: [] },
   students: [],
