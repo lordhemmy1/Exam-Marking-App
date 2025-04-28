@@ -326,7 +326,7 @@ function addDBEssaySet(qNo = '', answer = '') {
     <input type="text" class="db-essay-qno" value="${qNo}" placeholder="Q No" />
     <textarea class="db-essay-text" placeholder="Answer text">${answer}</textarea>
     <input type="file" class="db-essay-file" accept="image/png, image/jpeg" />
-    <div class="db-essay-preview"><img style="width:100px;height:100px;display:none;" /></div>
+    <div class="db-essay-preview"><img style="width:500px;height:500px;display:none;" /></div>
     <button type="button" class="db-essay-add">Continue</button>
     <button type="button" class="db-essay-remove">Delete</button>
   `;
