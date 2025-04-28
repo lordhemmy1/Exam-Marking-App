@@ -5,45 +5,60 @@ const MAX_STUDENTS = 300;
 
 // ---- image compression helper ----
 async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 500) {
-  return new Promise((resolve, reject) => {
-    if (!(file instanceof File)) {
-      return reject(new Error('Not a File object'));
-    }
+  if (!(file instanceof File)) {
+    throw new Error('Provided input is not a File.');
+  }
 
+  const readFileAsDataURL = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('FileReader failed'));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Invalid image data'));
-      img.onload = () => {
-        try {
-          let { width: w, height: h } = img;
-          if (w > h && w > maxWidth)      { h *= maxWidth / w; w = maxWidth; }
-          else if (h > w && h > maxHeight) { w *= maxHeight / h; h = maxHeight; }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-
-          let quality = 0.9, dataUrl, sizeKB;
-          do {
-            dataUrl = canvas.toDataURL('image/jpeg', quality);
-            sizeKB = (dataUrl.length * 3/4) / 1024;
-            if (sizeKB <= maxKB || quality <= 0.1) break;
-            quality -= 0.05;
-          } while (true);
-
-          resolve(dataUrl);
-        } catch (err) {
-          reject(new Error('Canvas processing error: ' + err.message));
-        }
-      };
-      img.src = reader.result;
-    };
+    reader.onerror = () => reject(new Error('Failed to read file.'));
+    reader.onload = () => resolve(reader.result);
     reader.readAsDataURL(file);
   });
-}
 
+  const loadImage = (src) => new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Invalid image file.'));
+    img.src = src;
+  });
+
+  const dataUrl = await readFileAsDataURL(file);
+  const img = await loadImage(dataUrl);
+
+  const canvas = document.createElement('canvas');
+  let w = img.width;
+  let h = img.height;
+
+  if (w > h && w > maxWidth) {
+    h *= maxWidth / w;
+    w = maxWidth;
+  } else if (h > w && h > maxHeight) {
+    w *= maxHeight / h;
+    h = maxHeight;
+  }
+
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+
+  let quality = 0.9;
+  let output = canvas.toDataURL('image/jpeg', quality);
+  let sizeKB = (output.length * 3 / 4) / 1024;
+
+  while (sizeKB > maxKB && quality > 0.1) {
+    quality -= 0.1;
+    output = canvas.toDataURL('image/jpeg', quality);
+    sizeKB = (output.length * 3 / 4) / 1024;
+  }
+
+  if (sizeKB > maxKB) {
+    throw new Error('Unable to compress image below ' + maxKB + 'KB.');
+  }
+
+  return output;
+}
 const DataManager = {
   answerKey: { objective: [], essay: [] },
   students: [],
