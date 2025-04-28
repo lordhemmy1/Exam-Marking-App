@@ -364,6 +364,7 @@ function addDBEssaySet(qNo = '', answer = '') {
     fileInput.value = '';  // clear for retry
   }
 });
+  
 
   set.querySelector('.db-essay-add').addEventListener('click', () => addDBEssaySet());
   set.querySelector('.db-essay-remove').addEventListener('click', () => set.remove());
@@ -467,24 +468,25 @@ async function saveStudentData() {
   if (!sets.length) return alert('At least one essay answer required');
   const essayData = [];
   for (const set of sets) {
-    const qno = set.querySelector('.db-essay-qno').value.trim();
-    if (!qno) return alert('Question number required for each essay answer');
-    const ta = set.querySelector('.db-essay-text');
-    const fileInput = set.querySelector('.db-essay-file');
-    let ans = '';
-    if (ta.style.display !== 'none' && ta.value.trim()) {
-      ans = ta.value.trim();
-    } else if (fileInput.files.length) {
-      ans = await new Promise(res => {
-        const fr = new FileReader();
-        fr.onload = e => res(e.target.result);
-        fr.readAsDataURL(fileInput.files[0]);
-      });
-    } else {
-      return alert(`Provide text or upload image for essay Q${qno}`);
-    }
-    essayData.push({ questionNo: qno, answer: ans });
+  const qno = set.querySelector('.db-essay-qno').value.trim();
+  if (!qno) return alert('Question number required');
+  const ta = set.querySelector('.db-essay-text');
+  const fileInput = set.querySelector('.db-essay-file');
+
+  let ans = '';
+  if (ta.style.display !== 'none' && ta.value.trim()) {
+    ans = ta.value.trim();
+  } else if (fileInput.dataset.dataurl) {
+    // use only the compressed version we stored earlier
+    ans = fileInput.dataset.dataurl;
+  } else {
+    return alert(
+      'Please wait for image compression to finish or enter text before adding student.'
+    );
   }
+
+  essayData.push({ questionNo: qno, answer: ans });
+}
 
   DataManager.students.push({ name, class: cls, arm, objectiveAnswers: objArr, essayAnswers: essayData });
   DataManager.saveStudents();
