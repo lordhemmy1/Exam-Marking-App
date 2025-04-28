@@ -340,26 +340,30 @@ function addDBEssaySet(qNo = '', answer = '') {
     fileInput.style.display = ta.value.trim() ? 'none' : '';
     img.style.display = ta.value.trim() ? 'none' : img.style.display;
   });
-  fileInput.addEventListener('change', () => {
+  fileInput.addEventListener('change', async () => {
   const file = fileInput.files[0];
   if (!file) return;
 
-  // attempt compress
-  compressToMaxSize(file)
-    .then(dataUrl => {
-      img.src = dataUrl;
-      img.style.display = '';
-      ta.style.display = 'none';
-      // stash compressed image for saveStudentData
-      fileInput.dataset.dataurl = dataUrl;
-    })
-    // <— HERE’S THE .catch to alert the user of any error:
-    .catch(err => {
-      alert('Image processing error: ' + err.message);
-      fileInput.value = '';   // clear the invalid file so they can retry
-    });
-});
+  // 1. Reject anything over 3 MB outright
+  if (file.size > 3 * 1024 * 1024) {
+    alert('Image too large! Please pick one under 3 MB.');
+    fileInput.value = '';
+    return;
+  }
 
+  try {
+    // 2. Compress it down to ≤500 KB
+    const compressed = await compressToMaxSize(file, 800, 800, 500);
+    // 3. Show & stash the tiny version
+    img.src = compressed;
+    img.style.display = '';
+    ta.style.display = 'none';
+    fileInput.dataset.dataurl = compressed;
+  } catch (err) {
+    alert('Image processing error: ' + err.message);
+    fileInput.value = '';  // clear for retry
+  }
+});
 
   set.querySelector('.db-essay-add').addEventListener('click', () => addDBEssaySet());
   set.querySelector('.db-essay-remove').addEventListener('click', () => set.remove());
