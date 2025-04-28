@@ -59,6 +59,7 @@ async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 
 
   return output;
 }
+
 const DataManager = {
   answerKey: { objective: [], essay: [] },
   students: [],
