@@ -545,7 +545,11 @@ function updateStudentAnswerInfo() {
       const idx = +btn.dataset.index;
       if (!confirm(`Delete record for ${DataManager.students[idx].name}?`)) return;
       DataManager.students.splice(idx, 1);
-      DataManager.saveStudents();
+      try {
+  DataManager.saveStudents();
+} catch (e) {
+  return alert('Could not save student data: ' + e.message);
+}
       updateStudentAnswerInfo();
     })
   );
