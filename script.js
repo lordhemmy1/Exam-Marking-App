@@ -693,13 +693,8 @@ function populateStudentObjectiveAnswers() {
 }
 
 function markObjectiveOnly() {
-  // In script.js, find function markObjectiveOnly():
-
-function markObjectiveOnly() {
-// In script.js, find function markObjectiveOnly():
-
-function markObjectiveOnly() {
-if (!DataManager.answerKey.objective || DataManager.answerKey.objective.length === 0) {
+if (!DataManager.answerKey.objective || DataManager.answerKey.objective.length === 0) 
+{
   return alert('Teacher has not supplied answers for Marking'); 
 }
   if (markingStudentIndex === null) return alert('No student selected');
