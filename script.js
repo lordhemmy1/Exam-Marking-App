@@ -1,7 +1,7 @@
 // script.js
 
 // --- Data Manager (uses localStorage) ---
-const MAX_STUDENTS = 300;
+const MAX_STUDENTS = 1000;
 
 // ---- image compression helper ----
 async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 500) {
@@ -671,6 +671,8 @@ function markNextStudent() {
   searchStudentForMarking();
   if (DataManager.scores.length === DataManager.students.length) {
     alert('All Students have been Marked and Recorded');
+  }
+}
 
 function populateStudentObjectiveAnswers() {
   if (markingStudentIndex === null) return alert('Select a student first');
@@ -820,6 +822,12 @@ function recordMark() {
     return alert(`Maximum of ${MAX_STUDENTS} scores reached.`);
   }
   const s = DataManager.students[markingStudentIndex];
+if (DataManager.scores.some(r =>
+      r.name === s.name &&
+      r.class === s.class &&
+      r.arm   === s.arm)) {
+  return alert("Student's Mark has been Recorded Already!");
+}
   const total = currentObjectiveScore + currentEssayScore;
   DataManager.scores.push({
     name: s.name,
