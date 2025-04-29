@@ -729,7 +729,7 @@ function populateStudentEssaySection() {
           const stud = student.essayAnswers.find(e => e.questionNo === k.questionNo) || {};
           const studAns = stud.answer || '';
           const studDisplay = studAns.startsWith('data:')
-            ? `<img src="${studAns}" style="width:100px;height:100px;"/>`
+            ? `<img src="${studAns}" style="width:720px;height:1123px;"/>`
             : studAns;
           // inside populateStudentEssaySection(), in the `.map(?)` HTML template:
 return `
