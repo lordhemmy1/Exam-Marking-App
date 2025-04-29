@@ -671,8 +671,6 @@ function markNextStudent() {
   searchStudentForMarking();
   if (DataManager.scores.length === DataManager.students.length) {
     alert('All Students have been Marked and Recorded');
-  }
-}
 
 function populateStudentObjectiveAnswers() {
   if (markingStudentIndex === null) return alert('Select a student first');
