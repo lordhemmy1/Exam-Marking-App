@@ -228,6 +228,17 @@ input[type="file"] {
 #db-student-form > button:hover {
   background: #8b1a1a;
 }
+/* put this in styles.css */
+#tab-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+#tab-nav-buttons button {
+  padding: 0.5rem 1rem;
+  /* add any other button styling you like here */
+}
 
 @media (max-width: 600px) {
   nav {
