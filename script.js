@@ -988,50 +988,35 @@ function resetAllData() {
   DataManager.clearAll();
 }
 
-// ────────────────────────────────────────────────────────────
-// At the BOTTOM of script.js, _replace_ any existing
-// window.addEventListener('DOMContentLoaded', …) with this:
-// ────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   DataManager.init();
-  initTabNavButtons();   // ← call _after_ init
+  initTabNavButtons();
 });
 
-// ────────────────────────────────────────────────────────────
-// Also _immediately after_ that listener (still at the bottom),
-// paste in these two functions:
-// ────────────────────────────────────────────────────────────
 function initTabNavButtons() {
-  // container flexed with space-between
-  const navWrap = document.createElement('div');
-  navWrap.id = 'tab-nav-buttons';
-  navWrap.style.display = 'flex';
-  navWrap.style.justifyContent = 'space-between';
-  navWrap.style.padding = '1rem';
+  // loop over every tab-content so buttons live under each one
+  document.querySelectorAll('.tab-content').forEach(container => {
+    const navWrap = document.createElement('div');
+    navWrap.style.display = 'flex';
+    navWrap.style.justifyContent = 'space-between';
+    navWrap.style.padding = '1rem';
 
-  const back = document.createElement('button');
-  back.style.padding = '0.75rem 1.5rem';
-  back.style.fontSize  = '1.25rem';
-  back.textContent = 'Back';
-  back.addEventListener('click', () => switchTab(-1));
+    // Back button
+    const back = document.createElement('button');
+    back.textContent = 'Back';
+    back.style.padding = '0.75rem 1.5rem';
+    back.style.fontSize = '1.25rem';
+    back.addEventListener('click', () => switchTab(-1));
 
-  const next = document.createElement('button');
-  next.style.padding = '0.75rem 1.5rem';
-  next.style.fontSize  = '1.25rem';
-  next.textContent = 'Next';
-  next.addEventListener('click', () => switchTab(1));
+    // Next button
+    const next = document.createElement('button');
+    next.textContent = 'Next';
+    next.style.padding = '0.75rem 1.5rem';
+    next.style.fontSize = '1.25rem';
+    next.addEventListener('click', () => switchTab(1));
 
-  navWrap.append(back, next);
-
-// insert below the currently active tab-content container
-  const content = document.querySelector('.tab-content.active');
-  content.insertAdjacentElement('afterend', navWrap);
-}
-
-function switchTab(direction) {
-  const tabs = Array.from(document.querySelectorAll('.tab-button'));
-  const current = tabs.findIndex(t => t.classList.contains('active'));
-  const target = current + direction;
-  if (target < 0 || target >= tabs.length) return;
-  tabs[target].click();
+    navWrap.append(back, next);
+    // insert below each tab section
+    container.insertAdjacentElement('afterend', navWrap);
+  });
 }
