@@ -472,8 +472,8 @@ function handleStudentUpload(e) {
 
       // remove header row, then for each row [name, arm, class]
       rows.slice(1).forEach((r, i) => {
-        const [name, arm, cls] = r;
-        if (name && arm && cls) {
+        const [name, cls, arm] = r;
+        if (name && cls && arm) {
           DataManager.students.push({
             name: String(name).trim(),
             class: String(cls).trim(),
