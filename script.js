@@ -1010,18 +1010,22 @@ function initTabNavButtons() {
   navWrap.style.padding = '1rem';
 
   const back = document.createElement('button');
+  back.style.padding = '0.75rem 1.5rem';
+  back.style.fontSize  = '1.25rem';
   back.textContent = 'Back';
   back.addEventListener('click', () => switchTab(-1));
 
   const next = document.createElement('button');
+  next.style.padding = '0.75rem 1.5rem';
+  next.style.fontSize  = '1.25rem';
   next.textContent = 'Next';
   next.addEventListener('click', () => switchTab(1));
 
   navWrap.append(back, next);
 
-currently active tab-content container
-+  const content = document.querySelector('.tab-content.active');
-+  content.insertAdjacentElement('afterend', navWrap);
+// insert below the currently active tab-content container
+  const content = document.querySelector('.tab-content.active');
+  content.insertAdjacentElement('afterend', navWrap);
 }
 
 function switchTab(direction) {
