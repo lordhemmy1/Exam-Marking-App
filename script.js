@@ -988,38 +988,46 @@ function resetAllData() {
   DataManager.clearAll();
 }
 
-window.addEventListener('DOMContentLoaded', () => DataManager.init()
-                       function initTabNavButtons() {
-  // create container
-  const nav = document.createElement('div');
-  nav.id = 'tab-nav-buttons';
-  nav.style.display = 'flex';
-  nav.style.justifyContent = 'space-between';
-  nav.style.padding = '1rem';
+// ────────────────────────────────────────────────────────────
+// At the BOTTOM of script.js, _replace_ any existing
+// window.addEventListener('DOMContentLoaded', …) with this:
+// ────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  DataManager.init();
+  initTabNavButtons();   // ← call _after_ init
+});
 
-  // back button
+// ────────────────────────────────────────────────────────────
+// Also _immediately after_ that listener (still at the bottom),
+// paste in these two functions:
+// ────────────────────────────────────────────────────────────
+function initTabNavButtons() {
+  // container flexed with space-between
+  const navWrap = document.createElement('div');
+  navWrap.id = 'tab-nav-buttons';
+  navWrap.style.display = 'flex';
+  navWrap.style.justifyContent = 'space-between';
+  navWrap.style.padding = '1rem';
+
   const back = document.createElement('button');
-  back.id = 'tab-back';
   back.textContent = 'Back';
   back.addEventListener('click', () => switchTab(-1));
 
-  // next button
   const next = document.createElement('button');
-  next.id = 'tab-next';
   next.textContent = 'Next';
   next.addEventListener('click', () => switchTab(1));
 
-  nav.append(back, next);
-  // place it just below the nav tabs
-  document.querySelector('nav').insertAdjacentElement('afterend', nav);
+  navWrap.append(back, next);
+
+  // insert right _after_ the existing <nav>…</nav>
+  const topNav = document.querySelector('nav');
+  topNav.parentNode.insertBefore(navWrap, topNav.nextSibling);
 }
 
-function switchTab(dir) {
+function switchTab(direction) {
   const tabs = Array.from(document.querySelectorAll('.tab-button'));
-  const i = tabs.findIndex(btn => btn.classList.contains('active'));
-  const j = i + dir;
-  if (j < 0 || j >= tabs.length) return;
-  tabs[j].click();
-  initTableNavButton();
-});
-
+  const current = tabs.findIndex(t => t.classList.contains('active'));
+  const target = current + direction;
+  if (target < 0 || target >= tabs.length) return;
+  tabs[target].click();
+}
