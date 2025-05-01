@@ -988,7 +988,7 @@ function resetAllData() {
   DataManager.clearAll();
 }
 
-window.addEventListener('DOMContentLoaded', () => DataManager.init();
+window.addEventListener('DOMContentLoaded', () => DataManager.init()
                        function initTabNavButtons() {
   // create container
   const nav = document.createElement('div');
@@ -1021,6 +1021,5 @@ function switchTab(dir) {
   if (j < 0 || j >= tabs.length) return;
   tabs[j].click();
   initTableNavButton();
-}
-);
+});
 
