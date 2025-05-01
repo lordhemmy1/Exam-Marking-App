@@ -85,6 +85,7 @@ const DataManager = {
     setupLevelRadios();
     bindStudentButtons();
     bindClearStudentsButton();
+    bindStudentUploadHandler();
     updateStudentAnswerInfo();
     updateScoreTable();
     bindClearScoreButton();
@@ -441,6 +442,61 @@ function bindStudentButtons() {
   saveBtn.addEventListener('click', saveStudentData);
   updateBtn.addEventListener('click', updateStudentData);
 }
+// ──────────────────────────────────────────────────────────
+// 3) Bulk‐import handler for “upload-students”
+// ──────────────────────────────────────────────────────────
+
+/**
+ * Fires once on init (after bindClearStudentsButton())
+ */
+function bindStudentUploadHandler() {
+  document
+    .getElementById('upload-students')
+    .addEventListener('change', handleStudentUpload);
+}
+
+/**
+ * Reads an XLSX or CSV, skips row 1, and appends [name, arm, class]
+ * into DataManager.students, then re-renders and saves.
+ */
+function handleStudentUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return alert('No file selected.');
+
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const wb = XLSX.read(evt.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      // remove header row, then for each row [name, arm, class]
+      rows.slice(1).forEach((r, i) => {
+        const [name, arm, cls] = r;
+        if (name && arm && cls) {
+          DataManager.students.push({
+            name: String(name).trim(),
+            class: String(cls).trim(),
+            arm:  String(arm).trim(),
+            objectiveAnswers: [],
+            essayAnswers: []
+          });
+        }
+      });
+
+      DataManager.saveStudents();
+      updateStudentAnswerInfo();
+      alert('Imported ' + Math.max(0, rows.length - 1) + ' students.');
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    } finally {
+      e.target.value = ''; // clear input
+    }
+  };
+
+  reader.onerror = () => alert('File read error.');
+  reader.readAsArrayBuffer(file);
+        }
 
 function bindClearStudentsButton() {
   document.getElementById('clear-students-btn')?.addEventListener('click', () => {
