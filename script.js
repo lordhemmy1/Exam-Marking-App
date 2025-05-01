@@ -994,7 +994,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function initTabNavButtons() {
-  // loop over every tab-content so buttons live under each one
   document.querySelectorAll('.tab-content').forEach(container => {
     container.insertAdjacentHTML('beforeend', '<br><br>');
     const navWrap = document.createElement('div');
@@ -1002,14 +1001,12 @@ function initTabNavButtons() {
     navWrap.style.justifyContent = 'space-between';
     navWrap.style.padding = '1rem';
 
-    // Back button
     const back = document.createElement('button');
     back.textContent = 'Back';
     back.style.padding = '0.75rem 1.5rem';
     back.style.fontSize = '1.25rem';
     back.addEventListener('click', () => switchTab(-1));
 
-    // Next button
     const next = document.createElement('button');
     next.textContent = 'Next';
     next.style.padding = '0.75rem 1.5rem';
@@ -1019,4 +1016,12 @@ function initTabNavButtons() {
     navWrap.append(back, next);
     container.appendChild(navWrap);
   });
+}
+
+function switchTab(direction) {
+  const tabs = Array.from(document.querySelectorAll('.tab-button'));
+  const current = tabs.findIndex(t => t.classList.contains('active'));
+  const target = current + direction;
+  if (target < 0 || target >= tabs.length) return;
+  tabs[target].click();
 }
