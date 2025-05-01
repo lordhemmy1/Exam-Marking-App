@@ -1016,7 +1016,6 @@ function initTabNavButtons() {
     next.addEventListener('click', () => switchTab(1));
 
     navWrap.append(back, next);
-    // insert below each tab section
-    container.insertAdjacentElement('afterend', navWrap);
+    container.appendChild(navWrap);
   });
 }
