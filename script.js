@@ -1019,9 +1019,9 @@ function initTabNavButtons() {
 
   navWrap.append(back, next);
 
-  // insert right _after_ the existing <nav>…</nav>
-  const topNav = document.querySelector('nav');
-  topNav.parentNode.insertBefore(navWrap, topNav.nextSibling);
+currently active tab-content container
++  const content = document.querySelector('.tab-content.active');
++  content.insertAdjacentElement('afterend', navWrap);
 }
 
 function switchTab(direction) {
