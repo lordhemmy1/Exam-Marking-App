@@ -989,3 +989,36 @@ function resetAllData() {
 }
 
 window.addEventListener('DOMContentLoaded', () => DataManager.init());
+
+function initTabNavButtons() {
+  // create container
+  const nav = document.createElement('div');
+  nav.id = 'tab-nav-buttons';
+  nav.style.display = 'flex';
+  nav.style.justifyContent = 'space-between';
+  nav.style.padding = '1rem';
+
+  // back button
+  const back = document.createElement('button');
+  back.id = 'tab-back';
+  back.textContent = 'Back';
+  back.addEventListener('click', () => switchTab(-1));
+
+  // next button
+  const next = document.createElement('button');
+  next.id = 'tab-next';
+  next.textContent = 'Next';
+  next.addEventListener('click', () => switchTab(1));
+
+  nav.append(back, next);
+  // place it just below the nav tabs
+  document.querySelector('nav').insertAdjacentElement('afterend', nav);
+}
+
+function switchTab(dir) {
+  const tabs = Array.from(document.querySelectorAll('.tab-button'));
+  const i = tabs.findIndex(btn => btn.classList.contains('active'));
+  const j = i + dir;
+  if (j < 0 || j >= tabs.length) return;
+  tabs[j].click();
+}
