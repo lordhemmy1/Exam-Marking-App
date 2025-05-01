@@ -617,8 +617,13 @@ function startEditStudent(idx) {
   document.getElementById('db-student-class').value = s.class;
   document.getElementById('db-student-arm').value = s.arm;
   document.getElementById('db-objective-answer').value = s.objectiveAnswers.join(',');
-  document.getElementById('db-essay-form').innerHTML = '';
-  s.essayAnswers.forEach(e => addDBEssaySet(e.questionNo, e.answer));
+  const essayContainer = document.getElementById('db-essay-form');
+  essayContainer.innerHTML = '';
+  if (s.essayAnswers && s.essayAnswers.length) {
+    s.essayAnswers.forEach(e => addDBEssaySet(e.questionNo, e.answer));
+  } else {
+    initDBEssaySection();  // create one blank set for editing
+  }
   editingIndex = idx;
   document.getElementById('save-student-btn').style.display = 'none';
   document.getElementById('update-student-btn').style.display = '';
