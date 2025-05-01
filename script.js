@@ -995,7 +995,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function initTabNavButtons() {
   document.querySelectorAll('.tab-content').forEach(container => {
-    container.insertAdjacentHTML('beforeend', '<br><br>');
+    container.insertAdjacentHTML('beforeend', '<br><br><br><br>');
     const navWrap = document.createElement('div');
     navWrap.style.display = 'flex';
     navWrap.style.justifyContent = 'space-between';
