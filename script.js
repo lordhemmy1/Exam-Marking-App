@@ -996,6 +996,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function initTabNavButtons() {
   // loop over every tab-content so buttons live under each one
   document.querySelectorAll('.tab-content').forEach(container => {
+    container.insertAdjacentHTML('beforeend', '<br><br>');
     const navWrap = document.createElement('div');
     navWrap.style.display = 'flex';
     navWrap.style.justifyContent = 'space-between';
