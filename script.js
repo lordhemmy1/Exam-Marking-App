@@ -455,10 +455,6 @@ function bindStudentUploadHandler() {
     .addEventListener('change', handleStudentUpload);
 }
 
-/**
- * Reads an XLSX or CSV, skips row 1, and appends [name, arm, class]
- * into DataManager.students, then re-renders and saves.
- */
 function handleStudentUpload(e) {
   const file = e.target.files[0];
   if (!file) return alert('No file selected.');
@@ -472,10 +468,10 @@ function handleStudentUpload(e) {
 
       // remove header row, then for each row [name, arm, class]
       rows.slice(1).forEach(r => {
-        const [name, cls, arm, objRaw] = r;
+        const [name, cls, arm, objAns] = r;
         if (name && cls && arm) {
           // split the comma-separated objective answers into an array
-          const objArr = objRaw
+          const objArr = objAns
             ? 
             String(objRaw).trim().split(',').map(s => s.trim())
             : [];
@@ -484,7 +480,7 @@ function handleStudentUpload(e) {
             name: String(name).trim(),
             class: String(cls).trim(),
             arm:  String(arm).trim(),
-            objectiveAnswers: objArr,    // ← populated from XLSXessayAnswers: []
+            objectiveAnswers: objArr,    // ← populated from XLSX
             essayAnswers: []
     });
   }
