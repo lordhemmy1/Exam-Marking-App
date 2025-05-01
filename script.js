@@ -473,7 +473,7 @@ function handleStudentUpload(e) {
           // split the comma-separated objective answers into an array
           const objArr = objAns
             ? 
-            String(objRaw).trim().split(',').map(s => s.trim())
+            String(objAns).trim().split(',').map(s => s.trim())
             : [];
           
           DataManager.students.push({
