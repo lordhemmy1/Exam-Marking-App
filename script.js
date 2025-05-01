@@ -471,19 +471,26 @@ function handleStudentUpload(e) {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
       // remove header row, then for each row [name, arm, class]
-      rows.slice(1).forEach((r, i) => {
-        const [name, cls, arm] = r;
+      rows.slice(1).forEach(r => {
+        const [name, cls, arm, objRaw] = r;
         if (name && cls && arm) {
+          // split the comma-separated objective answers into an array
+          const objArr = objRaw
+            ? 
+            String(objRaw).trim().split(',').map(s => s.trim())
+            : [];
+          
           DataManager.students.push({
             name: String(name).trim(),
             class: String(cls).trim(),
             arm:  String(arm).trim(),
-            objectiveAnswers: [],
+            objectiveAnswers: objArr,    // ← populated from XLSXessayAnswers: []
             essayAnswers: []
-          });
-        }
-      });
+    });
+  }
+});
 
+      
       DataManager.saveStudents();
       updateStudentAnswerInfo();
       alert('Imported ' + Math.max(0, rows.length - 1) + ' students.');
@@ -514,7 +521,8 @@ async function saveStudentData() {
   const name = document.getElementById('db-student-name').value.trim();
   const cls = document.getElementById('db-student-class').value.trim();
   const arm = document.getElementById('db-student-arm').value.trim();
-  if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
+  if 
+    (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
   if (!objRaw) return alert('Objective answers required');
