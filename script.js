@@ -555,35 +555,6 @@ async function saveStudentData() {
   document.getElementById('db-student-form').reset();
   initDBEssaySection();
 }
-async function compressMultipleImages(fileList) {
-  const compressImage = file => {
-    return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxWidth = 800;
-          const scaleFactor = maxWidth / img.width;
-          canvas.width = maxWidth;
-          canvas.height = img.height * scaleFactor;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const compressedList = [];
-  for (let file of fileList) {
-    const base64 = await compressImage(file);
-    compressedList.push(base64);
-  }
-  return compressedList;
-}
 
 function updateStudentAnswerInfo() {
   const c = document.getElementById('student-db-reference');
@@ -684,16 +655,25 @@ async function updateStudentData() {
     if (ta.style.display !== 'none' && ta.value.trim()) {
       ans = ta.value.trim();
     } else if (fileInput.files.length) {
-      ans = await new Promise(res => {
-        const fr = new FileReader();
-        fr.onload = e => res(e.target.result);
-        fr.readAsDataURL(fileInput.files[0]);
-      });
+      const file = fileInput.files[0];
+      // 1) reject oversized files immediately
+      if (file.size > 3 * 1024 * 1024) {
+        alert('Image too large! Please pick one under 3 MB.');
+        return;
+      }
+      // 2) compress via canvas helper
+      try {
+        ans = await compressToMaxSize(file, 800, 800, 500);
+      } catch (err) {
+        alert('Image compression failed: ' + err.message);
+        return;
+      }
     } else {
       return alert(`Provide answer for essay Q${qno}`);
     }
-    essayData.push({ questionNo: qno, answer: ans });
-  }
+  essayData.push({ questionNo: qno, answer: ans || fileInput.dataset.dataurl });
+
+
 
   DataManager.students[editingIndex] = {
     name,
