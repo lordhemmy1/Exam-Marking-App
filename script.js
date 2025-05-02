@@ -669,9 +669,10 @@ async function updateStudentData() {
         return;
       }
     } else {
-      return alert(`Provide answer for essay Q${qno}`);
+      return alert(`Provide answer for essay Q${qno}`)
     }
-  essayData.push({ questionNo: qno, answer: ans || fileInput.dataset.dataurl });
+    essayData.push({ questionNo: qno, answer: ans || fileInput.dataset.dataurl });
+  }
 
 
 
