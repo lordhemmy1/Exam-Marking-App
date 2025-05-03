@@ -816,11 +816,11 @@ return `
     <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
     <td>${studDisplay}</td>
     <td>
-     <button class="btn-correct"><i class="fas fa-check"></i></button>
-      <button class="btn-incorrect"><i class="fas fa-times"></i></button>
-      <button class="btn-custom"><i class="fas fa-star"></i></button>
-      <button class="btn-erase"><i class="fas fa-eraser"></i></button>
-    </td>
+     <button class="btn-correct">✓</button>
+     <button class="btn-incorrect">✗</button>
+     <button class="btn-custom">✎</button>
+     <button class="btn-erase">🗑️</button>
+     </td>
   </tr>`;
         })
         .join('')}
