@@ -816,10 +816,10 @@ return `
     <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
     <td>${studDisplay}</td>
     <td>
-     <button class="btn-correct">✓</button>
-     <button class="btn-incorrect">✗</button>
-     <button class="btn-custom">✎</button>
-     <button class="btn-erase">🗑️</button>
+     <button class="btn-correct" style="color: green;">✓</button>
+     <button class="btn-incorrect" style="color: red;">✗</button>
+     <button class="btn-custom" style="color: goldenrod;">✎</button>
+     <button class="btn-erase" style="color: black;">🗑️</button>
      </td>
   </tr>`;
         })
