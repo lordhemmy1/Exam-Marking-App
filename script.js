@@ -345,9 +345,9 @@ function addDBEssaySet(qNo = '', answer = '') {
   const file = fileInput.files[0];
   if (!file) return;
 
-  // 1. Reject anything over 3 MB outright
-  if (file.size > 3 * 1024 * 1024) {
-    alert('Image too large! Please pick one under 3 MB.');
+  // 1. Reject anything over 5 MB outright
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Image too large! Please pick one under 5 MB.');
     fileInput.value = '';
     return;
   }
@@ -657,8 +657,8 @@ async function updateStudentData() {
     } else if (fileInput.files.length) {
       const file = fileInput.files[0];
       // 1) reject oversized files immediately
-      if (file.size > 3 * 1024 * 1024) {
-        alert('Image too large! Please pick one under 3 MB.');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image too large! Please pick one under 5 MB.');
         return;
       }
       // 2) compress via canvas helper
