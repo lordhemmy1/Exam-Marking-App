@@ -353,7 +353,7 @@ function addDBEssaySet(qNo = '', answer = '') {
   }
 
   try {
-    // 2. Compress it down to ≤500 KB
+    // 2. Compress it down to ?500 KB
     const compressed = await compressToMaxSize(file, 800, 800, 500);
     // 3. Show & stash the tiny version
     img.src = compressed;
@@ -442,9 +442,9 @@ function bindStudentButtons() {
   saveBtn.addEventListener('click', saveStudentData);
   updateBtn.addEventListener('click', updateStudentData);
 }
-// ──────────────────────────────────────────────────────────
-// 3) Bulk‐import handler for “upload-students”
-// ──────────────────────────────────────────────────────────
+// ??????????????????????????????????????????????????????????
+// 3) Bulk?import handler for ?upload-students?
+// ??????????????????????????????????????????????????????????
 
 /**
  * Fires once on init (after bindClearStudentsButton())
@@ -480,7 +480,7 @@ function handleStudentUpload(e) {
             name: String(name).trim(),
             class: String(cls).trim(),
             arm:  String(arm).trim(),
-            objectiveAnswers: objArr,    // ← populated from XLSX
+            objectiveAnswers: objArr,    // ? populated from XLSX
             essayAnswers: []
     });
   }
@@ -517,7 +517,8 @@ async function saveStudentData() {
   const name = document.getElementById('db-student-name').value.trim();
   const cls = document.getElementById('db-student-class').value.trim();
   const arm = document.getElementById('db-student-arm').value.trim();
-  if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
+  if 
+    (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
   if (!objRaw) return alert('Objective answers required');
@@ -657,7 +658,7 @@ async function updateStudentData() {
       const file = fileInput.files[0];
       // 1) reject oversized files immediately
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image too large! Please pick one under 5 MB.');
+        alert('Image too large! Please pick one under 5?MB.');
         return;
       }
       // 2) compress via canvas helper
@@ -738,17 +739,14 @@ function searchStudentForMarking() {
 }
 
 function markNextStudent() {
-  // 1) if no students, nothing to do
   if (!DataManager.students.length) return;
-  // 2) if we've already recorded every student's score, block future clicks
-  if (DataManager.scores.length >= DataManager.students.length) {
-    return alert('All Students have been Marked and Recorded');
-  }
-  // 3) advance the index & load that student
   currentMarkIndex = (currentMarkIndex + 1) % DataManager.students.length;
   const s = DataManager.students[currentMarkIndex];
   document.getElementById('search-student-input').value = s.name;
   searchStudentForMarking();
+  if (DataManager.scores.length === DataManager.students.length) {
+    alert('All Students have been Marked and Recorded');
+  }
 }
 
 function populateStudentObjectiveAnswers() {
@@ -818,10 +816,10 @@ return `
     <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
     <td>${studDisplay}</td>
     <td>
-     <button class="btn-correct" style="color: bright green;">✓</button>
-     <button class="btn-incorrect" style="color: bright red;">✗</button>
-     <button class="btn-custom" style="color: goldenrod;">✎</button>
-     <button class="btn-erase" style="color: black;">🗑️</button>
+     <button class="btn-correct" style="color: bright green;">?</button>
+     <button class="btn-incorrect" style="color: bright red;">?</button>
+     <button class="btn-custom" style="color: goldenrod;">?</button>
+     <button class="btn-erase" style="color: black;">???</button>
      </td>
   </tr>`;
         })
