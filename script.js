@@ -816,8 +816,8 @@ return `
     <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
     <td>${studDisplay}</td>
     <td>
-     <button class="btn-correct" style="color: green;">✓</button>
-     <button class="btn-incorrect" style="color: red;">✗</button>
+     <button class="btn-correct" style="color: light green;">✓</button>
+     <button class="btn-incorrect" style="color: bright red;">✗</button>
      <button class="btn-custom" style="color: goldenrod;">✎</button>
      <button class="btn-erase" style="color: black;">🗑️</button>
      </td>
@@ -921,13 +921,11 @@ if (DataManager.scores.some(r =>
 function bindDownloadButton() {
   document.getElementById('download-score-btn')?.addEventListener('click', downloadScores);
 }
-function bindClearScoreButton() {
-  document.getElementById('clear-scores-btn')?.addEventListener('click', () => {
-    if (!confirm('Clear all scores?')) return;
-    DataManager.scores = [];
-    DataManager.saveScores();
-    updateScoreTable();
-  });
+function resetScores() {
+  if (!confirm('Clear all scores?')) return;
+  DataManager.scores = [];
+  DataManager.saveScores();
+  updateScoreTable();
 }
 
 function downloadScores() {
