@@ -517,8 +517,7 @@ async function saveStudentData() {
   const name = document.getElementById('db-student-name').value.trim();
   const cls = document.getElementById('db-student-class').value.trim();
   const arm = document.getElementById('db-student-arm').value.trim();
-  if 
-    (!name || !cls || !arm) return alert('Name, Class & Arm are required');
+  if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
   if (!objRaw) return alert('Objective answers required');
