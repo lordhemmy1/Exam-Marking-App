@@ -1,30 +1,31 @@
 // script.js
 
-const MAX_STUDENTS = 1000;  // increased capacity
+// --- Constants & Helpers ---
+const MAX_STUDENTS = 1000;
 
-// ---- Image compression helper ----
+/**
+ * Compress an image File down to <= maxKB via canvas resizing + JPEG quality.
+ */
 async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 500) {
-  if (!(file instanceof File)) {
-    throw new Error('Provided input is not a File.');
-  }
-  const readFileAsDataURL = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Failed to read file.'));
-    reader.onload  = () => resolve(reader.result);
-    reader.readAsDataURL(file);
+  if (!(file instanceof File)) throw new Error('Provided input is not a File.');
+  const readAsDataURL = f => new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = () => rej(new Error('Failed to read file.'));
+    fr.onload  = () => res(fr.result);
+    fr.readAsDataURL(f);
   });
-  const loadImage = src => new Promise((resolve, reject) => {
+  const loadImage = src => new Promise((res, rej) => {
     const img = new Image();
-    img.onload  = () => resolve(img);
-    img.onerror = () => reject(new Error('Invalid image file.'));
+    img.onload  = () => res(img);
+    img.onerror = () => rej(new Error('Invalid image file.'));
     img.src     = src;
   });
 
-  const dataUrl = await readFileAsDataURL(file);
+  const dataUrl = await readAsDataURL(file);
   const img     = await loadImage(dataUrl);
 
-  let w = img.width, h = img.height;
-  if (w > h && w > maxWidth)       { h *= maxWidth / w; w = maxWidth; }
+  let { width: w, height: h } = img;
+  if (w > h && w > maxWidth)      { h *= maxWidth / w; w = maxWidth; }
   else if (h > w && h > maxHeight) { w *= maxHeight / h; h = maxHeight; }
 
   const canvas = document.createElement('canvas');
@@ -34,28 +35,26 @@ async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 
   ctx.drawImage(img, 0, 0, w, h);
 
   let quality = 0.9;
-  let output = canvas.toDataURL('image/jpeg', quality);
-  let sizeKB = (output.length * 3 / 4) / 1024;
+  let output  = canvas.toDataURL('image/jpeg', quality);
+  let sizeKB  = (output.length * 3/4) / 1024;
 
   while (sizeKB > maxKB && quality > 0.1) {
     quality -= 0.1;
     output = canvas.toDataURL('image/jpeg', quality);
-    sizeKB = (output.length * 3 / 4) / 1024;
+    sizeKB = (output.length * 3/4) / 1024;
   }
-  if (sizeKB > maxKB) {
-    throw new Error('Unable to compress image below ' + maxKB + 'KB.');
-  }
+  if (sizeKB > maxKB) throw new Error('Unable to compress below ' + maxKB + 'KB.');
   return output;
 }
 
-// --- Data Manager (uses localStorage) ---
+// --- Data Manager (localStorage) ---
 const DataManager = {
   answerKey: { objective: [], essay: [] },
   students: [],
   scores: [],
 
   init() {
-    // load persisted data
+    // Load persisted data
     const ak = localStorage.getItem('answerKey');
     const sd = localStorage.getItem('studentsDB');
     const sc = localStorage.getItem('scoresDB');
@@ -63,23 +62,28 @@ const DataManager = {
     if (sd) this.students  = JSON.parse(sd);
     if (sc) this.scores    = JSON.parse(sc);
 
-    // initialize UI
+    // UI initialization
     renameAnswerTab();
     insertAnswerTabDescription();
     renderObjectiveKeyForm();
     renderEssayKeyForm();
     bindAnswerSaveButton();
     bindUploadHandlers();
+
     initDBEssaySection();
     setupLevelRadios();
     bindStudentButtons();
     bindClearStudentsButton();
     bindStudentUploadHandler();
     updateStudentAnswerInfo();
+
     updateScoreTable();
     bindClearScoreButton();
+
     bindMarkingTab();
     bindDownloadButton();
+
+    initTabNavButtons();
   },
 
   saveAnswerKey() {
@@ -104,11 +108,44 @@ const DataManager = {
   }
 };
 
-// --- Tab Navigation ---
+// --- Tab Navigation Helpers ---
+function switchTab(direction) {
+  const tabs = Array.from(document.querySelectorAll('.tab-button'));
+  const current = tabs.findIndex(t => t.classList.contains('active'));
+  const target = current + direction;
+  if (target < 0 || target >= tabs.length) return;
+  tabs[target].click();
+}
+
+function initTabNavButtons() {
+  document.querySelectorAll('.tab-content').forEach(container => {
+    container.insertAdjacentHTML('beforeend', '<br><br>');
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.justifyContent = 'space-between';
+    wrap.style.padding = '1rem';
+
+    const back = document.createElement('button');
+    back.textContent = 'Back';
+    back.style.padding = '0.75rem 1.5rem';
+    back.style.fontSize = '1.25rem';
+    back.addEventListener('click', () => switchTab(-1));
+
+    const next = document.createElement('button');
+    next.textContent = 'Next';
+    next.style.padding = '0.75rem 1.5rem';
+    next.style.fontSize = '1.25rem';
+    next.addEventListener('click', () => switchTab(1));
+
+    wrap.append(back, next);
+    container.appendChild(wrap);
+  });
+}
+
 document.querySelectorAll('.tab-button').forEach(btn =>
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(btn.dataset.tab).classList.add('active');
   })
@@ -120,70 +157,55 @@ function renameAnswerTab() {
   if (btn) btn.textContent = "Teacher's Answer Tab";
 }
 function insertAnswerTabDescription() {
-  const section = document.getElementById('answer');
-  const desc = document.createElement('p');
-  desc.textContent =
-    'Upload or manually type your objective answers into the objective form section and the essay section.';
-  desc.style.fontSize = '1rem';
-  section.insertBefore(desc, document.getElementById('objective-answer-container'));
+  const sec = document.getElementById('answer');
+  const p = document.createElement('p');
+  p.textContent = 'Upload or type your objective answers and essay key.';
+  p.style.fontSize = '1rem';
+  sec.insertBefore(p, document.getElementById('objective-answer-container'));
 }
 
-// --- Teacher's Answer Tab: render forms ---
+// --- Answer Key Forms ---
 function renderObjectiveKeyForm() {
   const c = document.getElementById('objective-answer-form');
   c.innerHTML = '';
   c.classList.add('two-col-form');
-
   const entries = DataManager.answerKey.objective;
-  const populated = entries.filter(o => o.answer.trim() !== '');
-  const toShow = populated.length
-    ? entries
-    : Array.from({ length: 50 }, (_, i) => ({ questionNo: i + 1, answer: '' }));
-
-  toShow.forEach(o => {
-    const div = document.createElement('div');
-    div.innerHTML = `<label>Q${o.questionNo}:</label>
-                     <input type="text" name="q_${o.questionNo}"
-                            value="${o.answer}" />`;
-    c.appendChild(div);
+  const pop = entries.filter(o => o.answer.trim());
+  const show = pop.length ? entries : Array.from({length:50}, (_,i)=>({questionNo:i+1,answer:''}));
+  show.forEach(o => {
+    const d = document.createElement('div');
+    d.innerHTML = `<label>Q${o.questionNo}:</label><input type="text" name="q_${o.questionNo}" value="${o.answer}"/>`;
+    c.appendChild(d);
   });
-
-  const totalEl = document.getElementById('objective-key-total');
-  if (populated.length) {
-    totalEl.textContent = `Total Objective Marks: ${populated.length}`;
-    totalEl.style.display = '';
-  } else {
-    totalEl.style.display = 'none';
-  }
+  const tot = document.getElementById('objective-key-total');
+  if (pop.length) {
+    tot.textContent = `Total Objective Marks: ${pop.length}`;
+    tot.style.display = '';
+  } else tot.style.display = 'none';
 }
+
 function renderEssayKeyForm() {
   const c = document.getElementById('essay-answer-form');
   c.innerHTML = '';
   const entries = DataManager.answerKey.essay;
-  const populated = entries.filter(e => e.questionNo && e.mark !== '');
-  const toShow = populated.length
-    ? entries
-    : Array.from({ length: 20 }, (_, i) => ({ questionNo: '', mark: '', answer: '' }));
-
-  toShow.forEach((e, i) => {
-    const div = document.createElement('div');
-    div.innerHTML = `
-      <label>Set ${e.questionNo || i + 1}:</label>
-      <input type="text"   name="qno_${i + 1}"  placeholder="Question No." value="${e.questionNo}" />
-      <input type="number" name="mark_${i + 1}" placeholder="Mark allotted"  value="${e.mark}" />
-      <textarea name="ans_${i + 1}" placeholder="Correct answer">${e.answer}</textarea>
+  const pop = entries.filter(e => e.questionNo && e.mark !== '');
+  const show = pop.length ? entries : Array.from({length:20}, (_,i)=>({questionNo:'',mark:'',answer:''}));
+  show.forEach((e,i) => {
+    const d = document.createElement('div');
+    d.innerHTML = `
+      <label>Set ${e.questionNo||i+1}:</label>
+      <input type="text"   name="qno_${i+1}" placeholder="Question No." value="${e.questionNo}" />
+      <input type="number" name="mark_${i+1}" placeholder="Mark" value="${e.mark}" />
+      <textarea name="ans_${i+1}" placeholder="Correct answer">${e.answer}</textarea>
     `;
-    c.appendChild(div);
+    c.appendChild(d);
   });
-
-  const totalEl = document.getElementById('essay-key-total');
-  const sum = populated.reduce((s, e) => s + Number(e.mark), 0);
-  if (populated.length) {
-    totalEl.textContent = `Total Essay Marks: ${sum}`;
-    totalEl.style.display = '';
-  } else {
-    totalEl.style.display = 'none';
-  }
+  const tot = document.getElementById('essay-key-total');
+  const sum = pop.reduce((s,e)=>s+Number(e.mark),0);
+  if (pop.length) {
+    tot.textContent = `Total Essay Marks: ${sum}`;
+    tot.style.display = '';
+  } else tot.style.display = 'none';
 }
 
 // --- Bind Answer Save & Upload ---
@@ -193,102 +215,83 @@ function bindAnswerSaveButton() {
   btn.addEventListener('click', saveAnswerData);
 }
 function bindUploadHandlers() {
-  document
-    .getElementById('upload-objective-answer')
-    ?.addEventListener('change', handleObjectiveUpload);
-  document
-    .getElementById('upload-essay-answer')
-    ?.addEventListener('change', handleEssayUpload);
+  document.getElementById('upload-objective-answer')?.addEventListener('change', handleObjectiveUpload);
+  document.getElementById('upload-essay-answer')   ?.addEventListener('change', handleEssayUpload);
 }
-
-// --- File Upload Parsers ---
 function handleObjectiveUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = evt => {
-    const data = evt.target.result;
-    const wb = XLSX.read(data, { type: 'array' });
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = evt => {
+    const wb = XLSX.read(evt.target.result, {type:'array'});
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1});
     if (rows.length <= 1) return;
-    DataManager.answerKey.objective = rows.slice(1).map(r => ({
-      questionNo: Number(r[0]) || undefined,
-      answer: String(r[1] || '').trim()
+    DataManager.answerKey.objective = rows.slice(1).map(r=>({
+      questionNo: Number(r[0])||undefined,
+      answer: String(r[1]||'').trim()
     }));
     DataManager.saveAnswerKey();
     renderObjectiveKeyForm();
   };
-  reader.readAsArrayBuffer(file);
+  r.readAsArrayBuffer(f);
 }
 function handleEssayUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = evt => {
-    const data = evt.target.result;
-    const wb = XLSX.read(data, { type: 'array' });
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = evt => {
+    const wb = XLSX.read(evt.target.result, {type:'array'});
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1});
     if (rows.length <= 1) return;
-    DataManager.answerKey.essay = rows.slice(1, 21).map(r => ({
-      questionNo: String(r[0] || '').trim(),
-      mark: r[1] != null ? r[1] : '',
-      answer: String(r[2] || '').trim()
+    DataManager.answerKey.essay = rows.slice(1,21).map(r=>({
+      questionNo: String(r[0]||'').trim(),
+      mark:       r[1]!=null ? r[1] : '',
+      answer:     String(r[2]||'').trim()
     }));
     DataManager.saveAnswerKey();
     renderEssayKeyForm();
   };
-  reader.readAsArrayBuffer(file);
+  r.readAsArrayBuffer(f);
 }
-
-// --- Save Answer Data ---
 function saveAnswerData() {
-  const objInputs = Array.from(
-    document.querySelectorAll('#objective-answer-form input')
-  );
-  if (objInputs.every(i => !i.value.trim())) {
-    return alert('Please fill at least one objective answer before saving.');
+  // Objective
+  const objInputs = Array.from(document.querySelectorAll('#objective-answer-form input'));
+  if (objInputs.every(i=>!i.value.trim())) {
+    return alert('Fill at least one objective answer.');
   }
-  DataManager.answerKey.objective = objInputs.map((i, idx) => ({
-    questionNo: idx + 1,
+  DataManager.answerKey.objective = objInputs.map((i,idx)=>({
+    questionNo: idx+1,
     answer: i.value.trim()
   }));
-
-  const essayDivs = Array.from(
-    document.querySelectorAll('#essay-answer-form div')
-  );
-  const hasOne = essayDivs.some((div, idx) => {
-    const q = div.querySelector(`[name="qno_${idx + 1}"]`).value.trim();
-    const m = div.querySelector(`[name="mark_${idx + 1}"]`).value.trim();
-    const a = div.querySelector(`[name="ans_${idx + 1}"]`).value.trim();
+  // Essay
+  const esDivs = Array.from(document.querySelectorAll('#essay-answer-form div'));
+  const valid = esDivs.some((d,i)=> {
+    const q = d.querySelector(`[name=qno_${i+1}]`).value.trim();
+    const m = d.querySelector(`[name=mark_${i+1}]`).value.trim();
+    const a = d.querySelector(`[name=ans_${i+1}]`).value.trim();
     return q && m && a;
   });
-  if (!hasOne) {
-    return alert(
-      'Please fill at least one essay question (Question No., Mark, and Answer).'
-    );
+  if (!valid) {
+    return alert('Fill at least one essay question.');
   }
-  DataManager.answerKey.essay = essayDivs.map((div, idx) => ({
-    questionNo: div.querySelector(`[name="qno_${idx + 1}"]`).value.trim(),
-    mark: div.querySelector(`[name="mark_${idx + 1}"]`).value.trim(),
-    answer: div.querySelector(`[name="ans_${idx + 1}"]`).value.trim()
+  DataManager.answerKey.essay = esDivs.map((d,i)=>({
+    questionNo: d.querySelector(`[name=qno_${i+1}]`).value.trim(),
+    mark:       d.querySelector(`[name=mark_${i+1}]`).value.trim(),
+    answer:     d.querySelector(`[name=ans_${i+1}]`).value.trim()
   }));
-
   DataManager.saveAnswerKey();
-  objInputs.forEach(i => (i.value = ''));
-  document
-    .querySelectorAll('#essay-answer-form input, #essay-answer-form textarea')
-    .forEach(el => (el.value = ''));
-
-  let notif = document.getElementById('answer-notification');
-  if (!notif) {
-    notif = document.createElement('div');
-    notif.id = 'answer-notification';
-    document.getElementById('save-answers-btn').insertAdjacentElement('afterend', notif);
+  objInputs.forEach(i=>i.value='');
+  document.querySelectorAll('#essay-answer-form input,#essay-answer-form textarea').forEach(el=>el.value='');
+  let n = document.getElementById('answer-notification');
+  if (!n) {
+    n = document.createElement('div');
+    n.id = 'answer-notification';
+    document.getElementById('save-answers-btn').insertAdjacentElement('afterend', n);
   }
-  notif.textContent = 'All answers saved successfully';
-  notif.style.color = 'green';
+  n.textContent = 'All answers saved successfully';
+  n.style.color = 'green';
 }
 
 // --- Students Database ---
@@ -299,46 +302,45 @@ function initDBEssaySection() {
   c.innerHTML = '';
   addDBEssaySet();
 }
+
 function addDBEssaySet(qNo = '', answer = '') {
-  const container = document.getElementById('db-essay-form');
+  const c = document.getElementById('db-essay-form');
   const set = document.createElement('div');
   set.className = 'db-essay-set';
   set.innerHTML = `
-    <input type="text" class="db-essay-qno" value="${qNo}" placeholder="Q No" />
+    <input class="db-essay-qno" value="${qNo}" placeholder="Q No"/>
     <textarea class="db-essay-text" placeholder="Answer text">${answer}</textarea>
-    <input type="file" class="db-essay-file" accept="image/png, image/jpeg" />
-    <div class="db-essay-preview"><img style="width:500px;height:500px;display:none;" /></div>
+    <input type="file" class="db-essay-file" accept="image/png,image/jpeg"/>
+    <div class="db-essay-preview"><img style="width:200px;height:200px;display:none;"/></div>
     <button type="button" class="db-essay-add">Continue</button>
     <button type="button" class="db-essay-remove">Delete</button>
   `;
-  container.appendChild(set);
-
+  c.appendChild(set);
   const ta = set.querySelector('.db-essay-text');
-  const fileInput = set.querySelector('.db-essay-file');
+  const fi = set.querySelector('.db-essay-file');
   const img = set.querySelector('img');
 
   ta.addEventListener('input', () => {
-    fileInput.style.display = ta.value.trim() ? 'none' : '';
-    img.style.display      = ta.value.trim() ? 'none' : img.style.display;
+    fi.style.display  = ta.value.trim() ? 'none' : '';
+    img.style.display = ta.value.trim() ? 'none' : img.style.display;
   });
-
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image too large! Please pick one under 5 MB.');
-      fileInput.value = '';
+  fi.addEventListener('change', async () => {
+    const f = fi.files[0];
+    if (!f) return;
+    if (f.size > 5*1024*1024) {
+      alert('Please pick under 5 MB.');
+      fi.value = '';
       return;
     }
     try {
-      const compressed = await compressToMaxSize(file, 800, 800, 500);
-      img.src                  = compressed;
-      img.style.display        = '';
-      ta.style.display         = 'none';
-      fileInput.dataset.dataurl = compressed;
-    } catch (err) {
-      alert('Image processing error: ' + err.message);
-      fileInput.value = '';
+      const d = await compressToMaxSize(f, 800, 800, 500);
+      img.src            = d;
+      img.style.display  = '';
+      ta.style.display   = 'none';
+      fi.dataset.dataurl = d;
+    } catch(err) {
+      alert('Image error: ' + err.message);
+      fi.value = '';
     }
   });
 
@@ -352,146 +354,125 @@ function setupLevelRadios() {
     secondary: ['JS1','JS2','JS3','SS1','SS2','SS3'],
     tertiary:  ['100L','200L','300L','400L','500L','MSc Level','PhD Level']
   };
-  const radios     = document.querySelectorAll('input[name="level"]');
-  const classSelect = document.getElementById('db-student-class');
-  const armInput    = document.getElementById('db-student-arm');
+  const radios = document.querySelectorAll('input[name="level"]');
+  const clsSel = document.getElementById('db-student-class');
+  const armIn  = document.getElementById('db-student-arm');
+  armIn.placeholder = 'Enter Arm';
 
-  armInput.placeholder = 'Enter Arm e.g Science, Business, Humanity…';
-
-  radios.forEach(r =>
-    r.addEventListener('change', () => {
-      classSelect.innerHTML = '<option value="">Select Class</option>';
-      levels[r.value].forEach(opt => {
-        const o = document.createElement('option');
-        o.value = opt;
-        o.textContent = opt;
-        classSelect.appendChild(o);
-      });
-      localStorage.setItem('selectedLevel', r.value);
-    })
-  );
-
-  const savedLevel = localStorage.getItem('selectedLevel');
-  if (savedLevel) {
-    const radio = document.querySelector(`input[name="level"][value="${savedLevel}"]`);
-    if (radio) radio.checked = true;
-  }
-
-  if (savedLevel && levels[savedLevel]) {
-    levels[savedLevel].forEach(opt => {
+  radios.forEach(r => r.addEventListener('change', () => {
+    clsSel.innerHTML = '<option value="">Select Class</option>';
+    levels[r.value].forEach(opt => {
       const o = document.createElement('option');
-      o.value = opt;
-      o.textContent = opt;
-      classSelect.appendChild(o);
+      o.value = o.textContent = opt;
+      clsSel.appendChild(o);
     });
-    const sel = localStorage.getItem('db-student-class');
-    if (sel) classSelect.value = sel;
+    localStorage.setItem('selectedLevel', r.value);
+  }));
+
+  const sl = localStorage.getItem('selectedLevel');
+  if (sl) {
+    document.querySelector(`input[name="level"][value="${sl}"]`)?.checked = true;
+    levels[sl].forEach(opt => {
+      const o = document.createElement('option');
+      o.value = o.textContent = opt;
+      clsSel.appendChild(o);
+    });
+    const sc = localStorage.getItem('db-student-class');
+    if (sc) clsSel.value = sc;
   }
-
-  classSelect.addEventListener('change', () => {
-    localStorage.setItem('db-student-class', classSelect.value);
-  });
-  armInput.addEventListener('input', () => {
-    localStorage.setItem('db-student-arm', armInput.value);
-  });
-  const savedArm = localStorage.getItem('db-student-arm');
-  if (savedArm) armInput.value = savedArm;
-}
-
-function bindStudentButtons() {
-  const saveBtn = document.getElementById('save-student-btn');
-  saveBtn.textContent = 'Add Student';
-  const updateBtn = document.getElementById('update-student-btn') || (() => {
-    const btn = document.createElement('button');
-    btn.id = 'update-student-btn';
-    btn.type = 'button';
-    btn.textContent = 'Update Student';
-    btn.style.display = 'none';
-    saveBtn.insertAdjacentElement('afterend', btn);
-    return btn;
-  })();
-
-  saveBtn.addEventListener('click', saveStudentData);
-  updateBtn.addEventListener('click', updateStudentData);
-}
-
-function bindClearStudentsButton() {
-  document.getElementById('clear-students-btn')?.addEventListener('click', () => {
-    if (!confirm('Clear all student records?')) return;
-    DataManager.students = [];
-    DataManager.saveStudents();
-    updateStudentAnswerInfo();
-  });
+  clsSel.addEventListener('change', () => localStorage.setItem('db-student-class', clsSel.value));
+  armIn.addEventListener('input', () => localStorage.setItem('db-student-arm', armIn.value));
 }
 
 // Bulk upload handler
 function bindStudentUploadHandler() {
-  document
-    .getElementById('upload-students')
-    .addEventListener('change', handleStudentUpload);
+  document.getElementById('upload-students')?.addEventListener('change', handleStudentUpload);
 }
 function handleStudentUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return alert('No file selected.');
-  const reader = new FileReader();
-  reader.onload = evt => {
+  const f = e.target.files[0];
+  if (!f) return alert('No file selected.');
+  const r = new FileReader();
+  r.onload = ev => {
     try {
-      const wb = XLSX.read(evt.target.result, { type: 'array' });
+      const wb = XLSX.read(ev.target.result, {type:'array'});
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      rows.slice(1).forEach(r => {
-        const [name, cls, arm, objAns] = r;
-        if (name && cls && arm) {
-          const objArr = objAns
-            ? String(objAns).trim().split(',').map(s => s.trim())
-            : [];
+      const rows = XLSX.utils.sheet_to_json(ws,{header:1});
+      rows.slice(1).forEach(rw => {
+        const [n, cl, a, oa] = rw;
+        if (n && cl && a) {
+          const arr = oa ? String(oa).split(',').map(s=>s.trim()) : [];
           DataManager.students.push({
-            name: String(name).trim(),
-            class: String(cls).trim(),
-            arm:  String(arm).trim(),
-            objectiveAnswers: objArr,
+            name: String(n).trim(),
+            class: String(cl).trim(),
+            arm:  String(a).trim(),
+            objectiveAnswers: arr,
             essayAnswers: []
           });
         }
       });
       DataManager.saveStudents();
       updateStudentAnswerInfo();
-      alert('Imported ' + Math.max(0, rows.length - 1) + ' students.');
-    } catch (err) {
+      alert(`Imported ${rows.length-1} students.`);
+    } catch(err) {
       alert('Import failed: ' + err.message);
     } finally {
       e.target.value = '';
     }
   };
-  reader.readAsArrayBuffer(file);
+  r.readAsArrayBuffer(f);
+}
+
+function bindStudentButtons() {
+  const sb = document.getElementById('save-student-btn');
+  sb.textContent = 'Add Student';
+  const ub = document.getElementById('update-student-btn') || (() => {
+    const b = document.createElement('button');
+    b.id = 'update-student-btn';
+    b.type = 'button';
+    b.textContent = 'Update Student';
+    b.style.display = 'none';
+    sb.insertAdjacentElement('afterend', b);
+    return b;
+  })();
+  sb.addEventListener('click', saveStudentData);
+  ub.addEventListener('click', updateStudentData);
+}
+
+function bindClearStudentsButton() {
+  document.getElementById('clear-students-btn')?.addEventListener('click', () => {
+    if (!confirm('Clear all students?')) return;
+    DataManager.students = [];
+    DataManager.saveStudents();
+    updateStudentAnswerInfo();
+  });
 }
 
 async function saveStudentData() {
   if (DataManager.students.length >= MAX_STUDENTS) {
-    return alert(`Maximum of ${MAX_STUDENTS} students reached.`);
+    return alert(`Max of ${MAX_STUDENTS} reached.`);
   }
-  const name = document.getElementById('db-student-name').value.trim();
-  const cls = document.getElementById('db-student-class').value.trim();
-  const arm = document.getElementById('db-student-arm').value.trim();
+  const name  = document.getElementById('db-student-name').value.trim();
+  const cls   = document.getElementById('db-student-class').value.trim();
+  const arm   = document.getElementById('db-student-arm').value.trim();
   if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
   const objRaw = document.getElementById('db-objective-answer').value.trim();
   if (!objRaw) return alert('Objective answers required');
   const objArr = objRaw.split(',').map(s => s.trim());
 
-  const sets = Array.from(document.querySelectorAll('.db-essay-set'));
+  const sets    = Array.from(document.querySelectorAll('.db-essay-set'));
   if (!sets.length) return alert('At least one essay answer required');
   const essayData = [];
   for (const set of sets) {
     const qno = set.querySelector('.db-essay-qno').value.trim();
-    if (!qno) return alert('Question number required for each essay answer');
+    if (!qno) return alert('Question number required');
     const ta = set.querySelector('.db-essay-text');
-    const fileInput = set.querySelector('.db-essay-file');
+    const fi = set.querySelector('.db-essay-file');
     let ans = '';
     if (ta.style.display !== 'none' && ta.value.trim()) {
       ans = ta.value.trim();
-    } else if (fileInput.dataset.dataurl) {
-      ans = fileInput.dataset.dataurl;
+    } else if (fi.dataset.dataurl) {
+      ans = fi.dataset.dataurl;
     } else {
       return alert(`Provide text or upload image for essay Q${qno}`);
     }
@@ -499,11 +480,7 @@ async function saveStudentData() {
   }
 
   DataManager.students.push({ name, class: cls, arm, objectiveAnswers: objArr, essayAnswers: essayData });
-  try {
-    DataManager.saveStudents();
-  } catch (e) {
-    return alert('Could not save student data: ' + e.message);
-  }
+  DataManager.saveStudents();
   updateStudentAnswerInfo();
   alert('Student added');
   document.getElementById('db-student-form').reset();
@@ -515,167 +492,135 @@ function updateStudentAnswerInfo() {
   c.innerHTML = '';
   if (!DataManager.students.length) return;
   const tbl = document.createElement('table');
-  tbl.id = 'student-db-table';
   tbl.innerHTML = `
-    <thead>
-      <tr>
-        <th>Name</th><th>Class</th><th>Arm</th>
-        <th>Objective Answers</th><th>Essay Answers</th><th>Actions</th>
-      </tr>
-    </thead>
+    <thead><tr>
+      <th>Name</th><th>Class</th><th>Arm</th>
+      <th>Objective Answers</th><th>Essay Answers</th><th>Actions</th>
+    </tr></thead>
     <tbody>
-      ${DataManager.students
-        .map((s, i) => {
-          const obj = s.objectiveAnswers.join(', ');
-          const essay = s.essayAnswers
-            .map(e =>
-              e.answer.startsWith('data:')
-                ? `<img src="${e.answer}" style="width:50px;height:50px;"/>`
-                : e.answer
-            )
-            .join(', ');
-          return `
-          <tr>
-            <td>${s.name}</td>
-            <td>${s.class}</td>
-            <td>${s.arm}</td>
-            <td>${obj}</td>
-            <td>${essay}</td>
-            <td>
-              <button class="edit-student" data-index="${i}">Edit</button>
-              <button class="delete-student" data-index="${i}">Delete</button>
-            </td>
-          </tr>`;
-        })
-        .join('')}
+      ${DataManager.students.map((s,i) => {
+        const obj = s.objectiveAnswers.join(', ');
+        const es  = s.essayAnswers
+          .map(e => e.answer.startsWith('data:')
+            ? `<img src="${e.answer}" style="width:50px;height:50px;"/>`
+            : e.answer
+          ).join(', ');
+        return `
+        <tr>
+          <td>${s.name}</td><td>${s.class}</td><td>${s.arm}</td>
+          <td>${obj}</td><td>${es}</td>
+          <td>
+            <button class="edit-student" data-idx="${i}">Edit</button>
+            <button class="delete-student" data-idx="${i}">Delete</button>
+          </td>
+        </tr>`;
+      }).join('')}
     </tbody>`;
   c.appendChild(tbl);
-
-  tbl.querySelectorAll('.edit-student').forEach(btn =>
-    btn.addEventListener('click', () => startEditStudent(+btn.dataset.index))
+  tbl.querySelectorAll('.edit-student').forEach(b =>
+    b.addEventListener('click', () => startEditStudent(+b.dataset.idx))
   );
-  tbl.querySelectorAll('.delete-student').forEach(btn =>
-    btn.addEventListener('click', () => {
-      const idx = +btn.dataset.index;
-      if (!confirm(`Delete record for ${DataManager.students[idx].name}?`)) return;
-      DataManager.students.splice(idx, 1);
+  tbl.querySelectorAll('.delete-student').forEach(b =>
+    b.addEventListener('click', () => {
+      const i = +b.dataset.idx;
+      if (!confirm(`Delete ${DataManager.students[i].name}?`)) return;
+      DataManager.students.splice(i,1);
       DataManager.saveStudents();
       updateStudentAnswerInfo();
     })
   );
 }
 
-function startEditStudent(idx) {
-  const s = DataManager.students[idx];
-  document.getElementById('db-student-name').value   = s.name;
-  document.getElementById('db-student-class').value  = s.class;
-  document.getElementById('db-student-arm').value    = s.arm;
+function startEditStudent(i) {
+  const s = DataManager.students[i];
+  document.getElementById('db-student-name').value = s.name;
+  document.getElementById('db-student-class').value = s.class;
+  document.getElementById('db-student-arm').value = s.arm;
   document.getElementById('db-objective-answer').value = s.objectiveAnswers.join(',');
-
-  const essayContainer = document.getElementById('db-essay-form');
-  essayContainer.innerHTML = '';
-  if (s.essayAnswers && s.essayAnswers.length) {
+  const ec = document.getElementById('db-essay-form');
+  ec.innerHTML = '';
+  if (s.essayAnswers.length) {
     s.essayAnswers.forEach(e => addDBEssaySet(e.questionNo, e.answer));
   } else {
     initDBEssaySection();
   }
-
-  editingIndex = idx;
+  editingIndex = i;
   document.getElementById('save-student-btn').style.display   = 'none';
   document.getElementById('update-student-btn').style.display = '';
 }
 
 async function updateStudentData() {
-  if (editingIndex === null) return;
+  if (editingIndex===null) return;
   const name = document.getElementById('db-student-name').value.trim();
   const cls  = document.getElementById('db-student-class').value.trim();
   const arm  = document.getElementById('db-student-arm').value.trim();
   if (!name || !cls || !arm) return alert('Name, Class & Arm are required');
 
-  const objRaw = document.getElementById('db-objective-answer').value.trim();
-  if (!objRaw) return alert('Objective answers required');
-  const objArr = objRaw.split(',').map(s => s.trim());
+  const oraw = document.getElementById('db-objective-answer').value.trim();
+  if (!oraw) return alert('Objective answers required');
+  const objArr = oraw.split(',').map(s=>s.trim());
 
   const sets = Array.from(document.querySelectorAll('.db-essay-set'));
   const essayData = [];
-
   for (const set of sets) {
-    const qno       = set.querySelector('.db-essay-qno').value.trim();
-    const ta        = set.querySelector('.db-essay-text');
-    const fileInput = set.querySelector('.db-essay-file');
+    const qno = set.querySelector('.db-essay-qno').value.trim();
+    if (!qno) return alert('Question number required');
+    const ta = set.querySelector('.db-essay-text');
+    const fi = set.querySelector('.db-essay-file');
     let ans = '';
-    if (!qno) {
-      return alert('Question number required');
-    }
     if (ta.style.display !== 'none' && ta.value.trim()) {
       ans = ta.value.trim();
-    } else if (fileInput.files.length) {
-      const file = fileInput.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image too large! Please pick one under 5 MB.');
-        return;
+    } else if (fi.files.length) {
+      const f = fi.files[0];
+      if (f.size > 5*1024*1024) {
+        alert('Under 5 MB'); return;
       }
       try {
-        ans = await compressToMaxSize(file, 800, 800, 500);
-      } catch (err) {
-        alert('Image compression failed: ' + err.message);
-        return;
+        ans = await compressToMaxSize(f,800,800,500);
+      } catch(err) {
+        alert(err.message); return;
       }
-    } else if (fileInput.dataset.dataurl) {
-      ans = fileInput.dataset.dataurl;
+    } else if (fi.dataset.dataurl) {
+      ans = fi.dataset.dataurl;
     } else {
-      return alert(`Provide answer for essay Q${qno}`);
+      return alert(`Provide answer for Q${qno}`);
     }
     essayData.push({ questionNo: qno, answer: ans });
   }
 
   DataManager.students[editingIndex] = {
-    name,
-    class: cls,
-    arm,
-    objectiveAnswers: objArr,
-    essayAnswers: essayData
+    name, class: cls, arm, objectiveAnswers: objArr, essayAnswers: essayData
   };
   DataManager.saveStudents();
   updateStudentAnswerInfo();
-  alert('Student updated successfully');
+  alert('Student updated');
+  document.getElementById('db-student-form').reset();
+  initDBEssaySection();
+  editingIndex = null;
+  document.getElementById('save-student-btn').style.display   = '';
+  document.getElementById('update-student-btn').style.display = 'none';
 }
 
- // --- Marking & Scores ---
-let markingStudentIndex = null;
-let currentObjectiveScore = null;
-let currentEssayScore    = null;
-let currentMarkIndex     = -1;
+// --- Marking & Scores ---
+let markingIdx = null, curObjScore = null, curEssayScore = null, curMarkIdx = -1;
 
 function bindMarkingTab() {
-  document.getElementById('search-student-btn')
-    ?.addEventListener('click', searchStudentForMarking);
-  document.getElementById('populate-objective-btn')
-    ?.addEventListener('click', populateStudentObjectiveAnswers);
-  document.getElementById('mark-objective-btn')
-    ?.addEventListener('click', markObjectiveOnly);
-  document.getElementById('sum-essay-btn')
-    ?.addEventListener('click', sumEssayMarks);
-
-  const recordBtn = document.getElementById('record-mark-btn');
-  recordBtn?.addEventListener('click', () => {
+  document.getElementById('search-student-btn')?.addEventListener('click', searchStudentForMarking);
+  document.getElementById('populate-objective-btn')?.addEventListener('click', populateStudentObjectiveAnswers);
+  document.getElementById('mark-objective-btn')?.addEventListener('click', markObjectiveOnly);
+  document.getElementById('sum-essay-btn')?.addEventListener('click', sumEssayMarks);
+  document.getElementById('record-mark-btn')?.addEventListener('click', () => {
     recordMark();
-    setTimeout(() => {
-      document.getElementById('marking-notification').textContent = '';
-    }, 2000);
+    setTimeout(() => document.getElementById('marking-notification').textContent = '', 2000);
   });
-
-  document.getElementById('mark-next-btn')
-    ?.addEventListener('click', markNextStudent);
+  document.getElementById('mark-next-btn')?.addEventListener('click', markNextStudent);
 }
 
 function searchStudentForMarking() {
-  const name = document.getElementById('search-student-input').value.trim().toLowerCase();
-  const idx  = DataManager.students.findIndex(s => s.name.toLowerCase() === name);
-  if (idx < 0) {
-    alert('Student not found'); return;
-  }
-  markingStudentIndex = idx;
+  const n = document.getElementById('search-student-input').value.trim().toLowerCase();
+  const idx = DataManager.students.findIndex(s => s.name.toLowerCase() === n);
+  if (idx < 0) return alert('Student not found');
+  markingIdx = idx;
   const s = DataManager.students[idx];
   document.getElementById('mark-student-name').value  = s.name;
   document.getElementById('mark-student-class').value = s.class;
@@ -684,79 +629,70 @@ function searchStudentForMarking() {
   document.getElementById('objective-marking-details').textContent = '';
   document.getElementById('essay-marking-container').innerHTML    = '';
   document.getElementById('essay-scoring-details').textContent    = '';
-  currentObjectiveScore = null;
-  currentEssayScore    = null;
+  curObjScore = curEssayScore = null;
 }
 
 function markNextStudent() {
   if (!DataManager.students.length) return;
   if (DataManager.scores.length === DataManager.students.length) {
-    alert('All Students have been Marked and Recorded');
-    return;
+    return alert('All Students have been Marked and Recorded');
   }
-  currentMarkIndex = (currentMarkIndex + 1) % DataManager.students.length;
-  const s = DataManager.students[currentMarkIndex];
+  curMarkIdx = (curMarkIdx + 1) % DataManager.students.length;
+  const s = DataManager.students[curMarkIdx];
   document.getElementById('search-student-input').value = s.name;
   searchStudentForMarking();
 }
 
 function populateStudentObjectiveAnswers() {
-  if (markingStudentIndex === null) return alert('Select a student first');
-  const student = DataManager.students[markingStudentIndex];
-  const form    = document.getElementById('objective-marking-form');
-  form.innerHTML = '';
-  form.classList.add('two-col-form');
-  student.objectiveAnswers.forEach((a, i) => {
-    const div = document.createElement('div');
-    div.innerHTML = `<label>Q${i+1}:</label>
-                     <input type="text" name="obj_q_${i+1}" value="${a}" readonly />`;
-    form.appendChild(div);
+  if (markingIdx === null) return alert('Select a student first');
+  if (!DataManager.answerKey.objective.length) return alert('Teacher has not supplied answers for Marking');
+  const st = DataManager.students[markingIdx];
+  const f  = document.getElementById('objective-marking-form');
+  f.innerHTML = '';
+  f.classList.add('two-col-form');
+  st.objectiveAnswers.forEach((a,i) => {
+    const d = document.createElement('div');
+    d.innerHTML = `<label>Q${i+1}:</label><input readonly value="${a}"/>`;
+    f.appendChild(d);
   });
-  currentObjectiveScore = null;
+  curObjScore = null;
   document.getElementById('objective-marking-details').textContent = '';
   populateStudentEssaySection();
 }
 
 function markObjectiveOnly() {
-  if (!DataManager.answerKey.objective || !DataManager.answerKey.objective.length) {
-    return alert('Teacher has not supplied answers for Marking');
-  }
-  if (markingStudentIndex === null) return alert('No student selected');
-
+  if (!DataManager.answerKey.objective.length) return alert('Teacher has not supplied answers for Marking');
+  if (markingIdx === null) return alert('No student selected');
   const inputs = Array.from(document.querySelectorAll('#objective-marking-form input'));
   let correct = 0;
   inputs.forEach(inp => {
-    const qn = parseInt(inp.name.split('_')[2], 10);
-    const studAns = inp.value.trim().toLowerCase();
-    const keyObj  = DataManager.answerKey.objective.find(o => o.questionNo === qn) || {};
-    if (studAns === (keyObj.answer || '').trim().toLowerCase()) correct++;
+    const qn = parseInt(inp.name.split('_')[1],10) || (inp.previousSibling.textContent.match(/Q(\d+)/)||[])[1];
+    const stud = inp.value.trim().toLowerCase();
+    const key = DataManager.answerKey.objective.find(o => o.questionNo===qn);
+    if (key && key.answer.trim().toLowerCase() === stud) correct++;
   });
-  currentObjectiveScore = correct;
+  curObjScore = correct;
   document.getElementById('objective-marking-details').textContent =
     `Objective Score: ${correct} / ${DataManager.answerKey.objective.length}`;
 }
 
 function populateStudentEssaySection() {
-  const container = document.getElementById('essay-marking-container');
-  container.innerHTML = '';
+  const c = document.getElementById('essay-marking-container');
+  c.innerHTML = '';
   const key     = DataManager.answerKey.essay;
-  const student = DataManager.students[markingStudentIndex];
+  const st      = DataManager.students[markingIdx];
   const tbl     = document.createElement('table');
   tbl.innerHTML = `
-    <thead>
-      <tr><th>Teacher's Answer</th><th>Student's Answer</th><th>Marking Tools</th></tr>
-    </thead>
+    <thead><tr><th>Teacher's Answer</th><th>Student's Answer</th><th>Tools</th></tr></thead>
     <tbody>
       ${key.map(k => {
-        const stud = student.essayAnswers.find(e => e.questionNo === k.questionNo) || {};
-        const studAns = stud.answer || '';
-        const studDisplay = studAns.startsWith('data:')
-          ? `<img src="${studAns}" style="width:794px;height:1123px;"/>`
-          : studAns;
+        const found = st.essayAnswers.find(e=>e.questionNo===k.questionNo) || {};
+        const ans   = found.answer || '';
+        const disp  = ans.startsWith('data:') ? `<img src="${ans}" style="width:360px;height:562px"/>` : ans;
         return `
-          <tr data-qno="${k.questionNo}" data-mark="${k.mark}">
-            <td>Q${k.questionNo} [${k.mark}]: ${k.answer}</td>
-            <td>${studDisplay}</td>
+          <tr data-q="${k.questionNo}" data-m="${k.mark}">
+            <td>Q${k.questionNo}[${k.mark}]: ${k.answer}</td>
+            <td>${disp}</td>
             <td>
               <button class="btn-correct" style="color:green;">✓</button>
               <button class="btn-incorrect" style="color:red;">✗</button>
@@ -766,91 +702,79 @@ function populateStudentEssaySection() {
           </tr>`;
       }).join('')}
     </tbody>`;
-  container.appendChild(tbl);
+  c.appendChild(tbl);
 
-  tbl.querySelectorAll('tr[data-qno]').forEach(row => {
-    const updateScore = () => {
-      let total = 0;
-      tbl.querySelectorAll('tr[data-qno]').forEach(r => {
+  tbl.querySelectorAll('tr[data-q]').forEach(row => {
+    const update = () => {
+      let total=0;
+      tbl.querySelectorAll('tr[data-q]').forEach(r=>{
         const sc = parseFloat(r.dataset.score);
         if (!isNaN(sc)) total += sc;
       });
-      currentEssayScore = total;
+      curEssayScore = total;
       document.getElementById('essay-scoring-details').textContent = `Essay Score: ${total}`;
     };
-
-    row.querySelector('.btn-correct').addEventListener('click', () => {
-      row.dataset.score = row.dataset.mark;
-      updateScore();
+    row.querySelector('.btn-correct').addEventListener('click', ()=>{
+      row.dataset.score = row.dataset.m;
+      update();
     });
-    row.querySelector('.btn-incorrect').addEventListener('click', () => {
+    row.querySelector('.btn-incorrect').addEventListener('click', ()=>{
       row.dataset.score = 0;
-      updateScore();
+      update();
     });
-    row.querySelector('.btn-custom').addEventListener('click', () => {
+    row.querySelector('.btn-custom').addEventListener('click', ()=>{
       if (row.querySelector('.custom-input')) return;
-      const inp  = document.createElement('input');
-      inp.type   = 'number';
-      inp.className = 'custom-input';
-      inp.placeholder = 'Mark';
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.className='custom-input'; inp.placeholder='Mark';
       const done = document.createElement('button');
       done.textContent = 'Done';
-      done.addEventListener('click', () => {
+      done.addEventListener('click', ()=>{
         const v = parseFloat(inp.value);
         if (!isNaN(v)) {
           row.dataset.score = v;
-          updateScore();
+          update();
           inp.remove();
           done.remove();
         }
       });
       row.lastElementChild.append(inp, done);
     });
-    row.querySelector('.btn-erase').addEventListener('click', () => {
+    row.querySelector('.btn-erase').addEventListener('click', ()=>{
       delete row.dataset.score;
-      updateScore();
+      update();
     });
   });
 }
 
 function sumEssayMarks() {
-  if (!DataManager.answerKey.essay || !DataManager.answerKey.essay.length) {
-    return alert('Teacher has not supplied answers for Marking');
-  }
-  if (markingStudentIndex === null) return alert('No student selected');
-
+  if (!DataManager.answerKey.essay.length) return alert('Teacher has not supplied answers for Marking');
+  if (markingIdx === null) return alert('No student selected');
   let sum = 0;
-  document.querySelectorAll('#essay-marking-container tr[data-qno]').forEach(r => {
+  document.querySelectorAll('#essay-marking-container tr[data-q]').forEach(r=>{
     const sc = parseFloat(r.dataset.score);
-    if (!isNaN(sc)) sum += sc;
+    if (!isNaN(sc)) sum+=sc;
   });
-  const keyTotal = DataManager.answerKey.essay.reduce((s,e) => s + Number(e.mark), 0);
-  currentEssayScore = sum;
-  document.getElementById('essay-scoring-details').textContent =
-    `Essay Score: ${sum} / ${keyTotal}`;
+  const tot = DataManager.answerKey.essay.reduce((a,e)=>a+Number(e.mark),0);
+  curEssayScore = sum;
+  document.getElementById('essay-scoring-details').textContent = `Essay Score: ${sum} / ${tot}`;
 }
 
 function recordMark() {
-  if (markingStudentIndex === null) return alert('No student to record');
-  if (currentObjectiveScore === null) return alert('Please mark objective first');
-  if (currentEssayScore === null) return alert('Please sum essay first');
-  const s = DataManager.students[markingStudentIndex];
-  if (DataManager.scores.some(r =>
-        r.name === s.name &&
-        r.class === s.class &&
-        r.arm   === s.arm)) {
+  if (markingIdx === null) return alert('No student to record');
+  if (curObjScore === null) return alert('Please mark objective first');
+  if (curEssayScore === null) return alert('Please sum essay first');
+  const s = DataManager.students[markingIdx];
+  if (DataManager.scores.some(r=>r.name===s.name&&r.class===s.class&&r.arm===s.arm)) {
     return alert("Student's Mark has been Recorded Already!");
   }
-  const total = currentObjectiveScore + currentEssayScore;
-  DataManager.scores.push({ name: s.name, class: s.class, arm: s.arm, objective: currentObjectiveScore, essay: currentEssayScore, total });
+  const total = curObjScore + curEssayScore;
+  DataManager.scores.push({ name:s.name, class:s.class, arm:s.arm, objective:curObjScore, essay:curEssayScore, total });
   DataManager.saveScores();
   updateScoreTable();
   document.getElementById('marking-notification').textContent = 'Mark recorded!';
 }
 
-function bindDownloadButton() {
-  document.getElementById('download-score-btn')?.addEventListener('click', downloadScores);
-}
+// --- Score Tab & Download ---
 function bindClearScoreButton() {
   document.getElementById('clear-scores-btn')?.addEventListener('click', () => {
     if (!confirm('Clear all scores?')) return;
@@ -860,63 +784,66 @@ function bindClearScoreButton() {
   });
 }
 
+function bindDownloadButton() {
+  document.getElementById('download-score-btn')?.addEventListener('click', downloadScores);
+}
+
+function updateScoreTable() {
+  const tb = document.querySelector('#score-table tbody');
+  tb.innerHTML = '';
+  DataManager.scores.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.name}</td>
+      <td>${r.class}</td>
+      <td>${r.arm}</td>
+      <td>${r.objective}</td>
+      <td>${r.essay}</td>
+      <td>${r.total}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
 function downloadScores() {
-  const scores = DataManager.scores;
-  if (!scores.length) return alert('No scores to download');
-  const format = prompt('Enter format: xlsx, csv, pdf, doc').toLowerCase();
-  if (format === 'xlsx') {
-    const ws = XLSX.utils.json_to_sheet(scores);
-    const wb = { Sheets: { Scores: ws }, SheetNames: ['Scores'] };
+  const sc = DataManager.scores;
+  if (!sc.length) return alert('No scores to download');
+  const fmt = prompt('Enter format: xlsx, csv, pdf, doc').toLowerCase();
+  if (fmt === 'xlsx') {
+    const ws = XLSX.utils.json_to_sheet(sc);
+    const wb = { Sheets:{Scores:ws}, SheetNames:['Scores'] };
     XLSX.writeFile(wb, 'scores.xlsx');
-  } else if (format === 'csv') {
-    const ws = XLSX.utils.json_to_sheet(scores);
+  } else if (fmt === 'csv') {
+    const ws = XLSX.utils.json_to_sheet(sc);
     const csv = XLSX.utils.sheet_to_csv(ws);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const blob = new Blob([csv], {type:'text/csv'});
+    const link = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'scores.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  } else if (format === 'pdf') {
+    a.href = link; a.download='scores.csv'; a.click();
+    URL.revokeObjectURL(link);
+  } else if (fmt === 'pdf') {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let y = 10;
-    doc.text('Scores', 10, y);
-    y += 10;
-    doc.text('Name | Class | Arm | Obj | Essay | Total', 10, y);
-    y += 10;
-    scores.forEach(r => {
+    doc.text('Scores', 10, y); y += 10;
+    sc.forEach(r => {
       doc.text(`${r.name} | ${r.class} | ${r.arm} | ${r.objective} | ${r.essay} | ${r.total}`, 10, y);
       y += 10;
     });
     doc.save('scores.pdf');
-  } else if (format === 'doc') {
-    let content = '<html><body><h1>Scores</h1><table border="1"><tr><th>Name</th><th>Class</th><th>Arm</th><th>Objective</th><th>Essay</th><th>Total</th></tr>';
-    scores.forEach(r => {
-      content += `<tr><td>${r.name}</td><td>${r.class}</td><td>${r.arm}</td><td>${r.objective}</td><td>${r.essay}</td><td>${r.total}</td></tr>`;
+  } else if (fmt === 'doc') {
+    let html = '<h1>Scores</h1><table border="1"><tr><th>Name</th><th>Class</th><th>Arm</th><th>Obj</th><th>Essay</th><th>Total</th></tr>';
+    sc.forEach(r => {
+      html += `<tr><td>${r.name}</td><td>${r.class}</td><td>${r.arm}</td><td>${r.objective}</td><td>${r.essay}</td><td>${r.total}</td></tr>`;
     });
-    content += '</table></body></html>';
-    const blob = new Blob([content], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
+    html += '</table>';
+    const blob = new Blob([html], {type:'application/msword'});
+    const link = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'scores.doc';
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = link; a.download='scores.doc'; a.click();
+    URL.revokeObjectURL(link);
   } else {
     alert('Unknown format');
   }
-}
-
-function updateScoreTable() {
-  const tbody = document.querySelector('#score-table tbody');
-  tbody.innerHTML = '';
-  DataManager.scores.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.name}</td><td>${r.class}</td><td>${r.arm}</td><td>${r.objective}</td><td>${r.essay}</td><td>${r.total}</td>`;
-    tbody.appendChild(tr);
-  });
 }
 
 function resetAllData() {
@@ -924,41 +851,7 @@ function resetAllData() {
   DataManager.clearAll();
 }
 
-// Tab navigation buttons
-function initTabNavButtons() {
-  document.querySelectorAll('.tab-content').forEach(container => {
-    container.insertAdjacentHTML('beforeend', '<br><br>');
-    const navWrap = document.createElement('div');
-    navWrap.style.display        = 'flex';
-    navWrap.style.justifyContent = 'space-between';
-    navWrap.style.padding        = '1rem';
-
-    const back = document.createElement('button');
-    back.textContent            = 'Back';
-    back.style.padding          = '0.75rem 1.5rem';
-    back.style.fontSize         = '1.25rem';
-    back.addEventListener('click', () => switchTab(-1));
-
-    const next = document.createElement('button');
-    next.textContent            = 'Next';
-    next.style.padding          = '0.75rem 1.5rem';
-    next.style.fontSize         = '1.25rem';
-    next.addEventListener('click', () => switchTab(1));
-
-    navWrap.append(back, next);
-    container.appendChild(navWrap);
-  });
-}
-function switchTab(direction) {
-  const tabs    = Array.from(document.querySelectorAll('.tab-button'));
-  const current = tabs.findIndex(t => t.classList.contains('active'));
-  const target  = current + direction;
-  if (target < 0 || target >= tabs.length) return;
-  tabs[target].click();
-}
-
+// --- Initialize ---
 window.addEventListener('DOMContentLoaded', () => {
   DataManager.init();
-  initTabNavButtons();
-});].click();
-}
+});
