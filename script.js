@@ -921,14 +921,12 @@ if (DataManager.scores.some(r =>
 function bindDownloadButton() {  
   document.getElementById('download-score-btn')?.addEventListener('click', downloadScores);  
 }  
-function bindClearScoreButton() {  
-  document.getElementById('clear-scores-btn')?.addEventListener('click', () => {  
-    if (!confirm('Clear all scores?')) return;  
-    DataManager.scores = [];  
-    DataManager.saveScores();  
-    updateScoreTable();  
-  });  
-}  
+function resetScores() {
+  if (!confirm('Clear all scores?')) return;
+  DataManager.scores = [];
+  DataManager.saveScores();
+  updateScoreTable();
+}
 
 function downloadScores() {
   const scores = DataManager.scores;
