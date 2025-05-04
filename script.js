@@ -738,14 +738,17 @@ function searchStudentForMarking() {
 }
 
 function markNextStudent() {
+  // 1) if no students, nothing to do
   if (!DataManager.students.length) return;
+  // 2) if we've already recorded every student's score, block future clicks
+  if (DataManager.scores.length >= DataManager.students.length) {
+    return alert('All Students have been Marked and Recorded');
+  }
+  // 3) advance the index & load that student
   currentMarkIndex = (currentMarkIndex + 1) % DataManager.students.length;
   const s = DataManager.students[currentMarkIndex];
   document.getElementById('search-student-input').value = s.name;
   searchStudentForMarking();
-  if (DataManager.scores.length === DataManager.students.length) {
-    alert('All Students have been Marked and Recorded');
-  }
 }
 
 function populateStudentObjectiveAnswers() {
