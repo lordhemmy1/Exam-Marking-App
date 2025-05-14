@@ -1,4 +1,61 @@
 // script.js
+// auth.js
+// Firebase config & init
+firebase.initializeApp({
+  apiKey: "AIzaSyBN6N8I4lpAJNM1ohDkX65UeiIWNhX3xlk",
+  authDomain: "your-app.firebaseapp.com",
+  databaseURL: "https://your-app.firebaseio.com",
+  projectId: "your-app",
+  storageBucket: "your-app.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+});
+
+const auth = firebase.auth();
+const db   = firebase.database();
+
+const signupForm = document.getElementById('signup-form');
+const loginForm  = document.getElementById('login-form');
+const authCtn    = document.getElementById('auth-container');
+const appCtn     = document.getElementById('app');
+const userNickEl = document.getElementById('user-nick');
+const logoutBtn  = document.getElementById('logout-btn');
+
+// Sign Up
+signupForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const nick  = document.getElementById('signup-nick').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass  = document.getElementById('signup-pass').value;
+  const { user } = await auth.createUserWithEmailAndPassword(email, pass);
+  await db.ref('users/' + user.uid).set({ nickname: nick });
+});
+
+// Login
+loginForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  await auth.signInWithEmailAndPassword(email, pass);
+});
+
+// Auth State Listener
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    const snap = await db.ref('users/' + user.uid + '/nickname').get();
+    userNickEl.textContent = snap.val() || 'User';
+    authCtn.style.display = 'none';
+    appCtn.style.display  = 'block';
+    logoutBtn.style.display = 'block';
+  } else {
+    authCtn.style.display = 'block';
+    appCtn.style.display  = 'none';
+    logoutBtn.style.display = 'none';
+  }
+});
+
+// Logout
+logoutBtn.addEventListener('click', () => auth.signOut());
 
 // --- Data Manager (uses localStorage) ---
 const MAX_STUDENTS = 1000;
