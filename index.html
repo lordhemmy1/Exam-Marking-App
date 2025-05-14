@@ -13,8 +13,33 @@
     crossorigin="anonymous"
     referrerpolicy="no-referrer"
   />
+   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <style>
+    #app { display: none; }
+    #auth-container { max-width: 320px; margin: 2rem auto; }
+    form { display: flex; flex-direction: column; }
+    input, button { margin: .5rem 0; padding: .5rem; }
+  </style>
 </head>
 <body>
+  <div id="auth-container">
+    <form id="signup-form">
+      <h2>Sign Up</h2>
+      <input type="text" id="signup-nick" placeholder="Nickname" required />
+      <input type="email" id="signup-email" placeholder="Email" required />
+      <input type="password" id="signup-pass" placeholder="Password" required />
+      <button type="submit">Register</button>
+    </form>
+    <form id="login-form">
+      <h2>Login</h2>
+      <input type="email" id="login-email" placeholder="Email" required />
+      <input type="password" id="login-pass" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+  </div>
+  
   <header>Examination Marking App</header>
   <nav>
     <button class="tab-button active" data-tab="answer">Teacher's Answer Tab</button>
@@ -158,6 +183,7 @@
   </section>
 
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+   <script src="auth.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
