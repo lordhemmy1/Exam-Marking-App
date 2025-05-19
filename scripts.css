@@ -1,3 +1,6 @@
+tion: column;
+  }
+}
 /* Basic styling */
 body {
   font-family: Arial, sans-serif;
@@ -5,6 +8,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
 header {
   background: #007bff;
   color: white;
@@ -13,26 +17,30 @@ header {
   font-size: 1.5rem;
   font-weight: bold;
 }
+
 nav {
   display: flex;
   justify-content: center;
   background: #e0e0e0;
   border-bottom: 1px solid #ccc;
-  padding: 1rem; /* added padding */
+  padding: 1rem;
 }
+
 .tab-button {
   padding: 1rem 2rem;
   cursor: pointer;
   background: #ccc;
   border: none;
-  margin: 0 0.5rem; /* increased margin */
+  margin: 0 0.5rem;
   transition: background 0.3s;
 }
+
 .tab-button.active {
   background: #007bff;
   color: white;
   font-weight: bold;
 }
+
 .tab-content {
   display: none;
   padding: 2rem;
@@ -41,53 +49,62 @@ nav {
   margin: 2rem;
   border-radius: 8px;
 }
+
 .tab-content.active {
   display: block;
 }
+
 h3, h4 {
   margin-bottom: 1rem;
   color: #333;
 }
+
 form {
-  margin-bottom: 2rem; /* increased bottom margin */
-  padding: 1rem; /* added padding */
+  margin-bottom: 2rem;
+  padding: 1rem;
   background: #fff;
   border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
+
 form div {
   margin-bottom: 1rem;
 }
+
 label {
   display: inline-block;
-  width: 100px; /* increased width for spacing */
+  width: 100px;
   font-weight: 500;
 }
+
 input[type="text"],
 input[type="number"],
 textarea {
-  padding: 0.75rem; /* increased padding */
+  padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 5px;
   width: 300px;
   max-width: 100%;
 }
+
 textarea {
-  width: 100%;
-  height: 80px; /* increased height */
+  height: 80px;
 }
+
 button {
-  padding: 0.75rem 1.5rem; /* increased padding */
+  padding: 0.75rem 1.5rem;
   background: #007bff;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  margin-right: 0.5rem; /* spacing between buttons */
+  margin-right: 0.5rem;
 }
+
 button:hover {
   background: #0056b3;
 }
+
 .upload-note {
   font-size: 0.9rem;
   color: #555;
@@ -95,57 +112,63 @@ button:hover {
   font-style: italic;
 }
 
-/* File‐upload button styling */
+/* File-upload button styling */
 input[type="file"] {
   background-color: #adff2f;
   padding: 0.5rem;
   border-radius: 4px;
   cursor: pointer;
-  margin-bottom: 1rem; /* spacing below upload */
+  margin-bottom: 1rem;
 }
 
-/* Two‐column layout */
+/* Two-column layout */
 .two-col-form {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem 2rem; /* increased gap */
+  gap: 1rem 2rem;
 }
 
 /* Score Table */
 #score-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 2rem; /* increased margin */
+  margin-top: 2rem;
 }
+
 #score-table th,
 #score-table td {
   border: 1px solid #ccc;
-  padding: 1rem; /* increased padding */
+  padding: 1rem;
   text-align: center;
 }
+
 #score-table th {
   background: #007bff;
   color: white;
 }
+
 #score-table tbody tr:nth-child(even) {
   background: #f2f2f2;
 }
+
 .score-controls {
   margin-top: 2rem;
   display: flex;
   gap: 1rem;
 }
+
 .score-controls button {
   flex: 1;
 }
 
-/* Essay‐group in Students Database */
+/* Essay group in Students Database */
 .essay-group {
   border: 1px solid #ccc;
-  padding: 1.5rem; /* increased padding */
+  padding: 1.5rem;
   margin-bottom: 1rem;
   border-radius: 5px;
 }
+
 .essay-addition {
   margin-top: 0.5rem;
 }
@@ -196,35 +219,40 @@ input[type="file"] {
   border-collapse: collapse;
   margin-top: 1rem;
 }
+
 #student-db-table th,
 #student-db-table td {
   border: 1px solid #ccc;
-  padding: 0.75rem; /* increased padding */
+  padding: 0.75rem;
 }
+
 #student-db-table th {
   background: #007bff;
   color: white;
 }
+
 #student-db-table tbody tr:nth-child(even) {
   background: #f9f9f9;
 }
 
-/* Clear & Reset buttons styling (brick red) */
+/* Clear & Reset buttons styling */
 #clear-students-btn,
 #clear-scores-btn,
-#reset-all-btn { /* assume reset-all has this ID */
-  background: #b22222; /* brick red */
+#reset-all-btn {
+  background: #b22222;
 }
+
 #clear-students-btn:hover,
 #clear-scores-btn:hover,
 #reset-all-btn:hover {
-  background: #8b1a1a; /* darker brick red */
+  background: #8b1a1a;
 }
 
-/* Reset‐DB button styling */
+/* Reset-DB button styling */
 #db-student-form > button {
-  background: #b22222; /* brick red */
+  background: #b22222;
 }
+
 #db-student-form > button:hover {
   background: #8b1a1a;
 }
@@ -245,3 +273,4 @@ input[type="file"] {
     flex-direction: column;
   }
 }
+
