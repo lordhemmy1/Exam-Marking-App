@@ -6,40 +6,8 @@
   <link rel="stylesheet" href="styles.css" />
   <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    integrity="sha512-pb5j0HPMmCleQ5e17qOz+/BYY0krV3gc+VmJADj3/lKPAyXMql1rCpHLoildVandi1o1f6F93dMk4Yld2+uigA=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
-   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <style>
-    #app { display: none; }
-    #auth-container { max-width: 320px; margin: 2rem auto; }
-    form { display: flex; flex-direction: column; }
-    input, button { margin: .5rem 0; padding: .5rem; }
-  </style>
 </head>
 <body>
-  <div id="auth-container">
-    <form id="signup-form">
-      <h2>Sign Up</h2>
-      <input type="text" id="signup-nick" placeholder="Nickname" required />
-      <input type="email" id="signup-email" placeholder="Email" required />
-      <input type="password" id="signup-pass" placeholder="Password" required />
-      <button type="submit">Register</button>
-    </form>
-    <form id="login-form">
-      <h2>Login</h2>
-      <input type="email" id="login-email" placeholder="Email" required />
-      <input type="password" id="login-pass" placeholder="Password" required />
-      <button type="submit">Login</button>
-    </form>
-  </div>
-  
   <header>Examination Marking App</header>
   <nav>
     <button class="tab-button active" data-tab="answer">Teacher's Answer Tab</button>
@@ -118,12 +86,6 @@
     <h4>Student Information</h4>
     <div id="student-db-reference"></div>
     <br><br>
-    <!-- ← INSERT THIS: bulk‐upload input -->
-    <div style="margin-top:1rem;">
-      <label for="upload-students">Import students (XLSX/CSV):</label>
-      <input type="file" id="upload-students" accept=".xlsx,.csv" />
-    </div>
-    <br><br>
     <button type="button" id="clear-students-btn">Clear Database</button>
   </section>
 
@@ -175,15 +137,14 @@
       </thead>
       <tbody></tbody>
     </table>
-    <div class = "score-controls">
-      <button type="button" id="clear-scores-btn">Reset Scores</button>
+    <div class="score-controls">
+      <button onclick="resetScores()">Reset Scores</button>
       <button type="button" id="download-score-btn">Download Scores</button>
       <button onclick="resetAllData()" id="reset-all-btn">Reset All</button>
     </div>
   </section>
 
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-   <script src="auth.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
