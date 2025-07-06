@@ -344,3 +344,136 @@ function saveAnswerData() {
   notif.style.color = 'green';
     }
                                   
+
+// --- Students Database ---  
+let editingIndex = null;  
+  
+function initDBEssaySection() {  
+  const c = document.getElementById('db-essay-form');  
+  c.innerHTML = '';  
+  addDBEssaySet();  
+}  
+function addDBEssaySet(qNo = '', answer = '') {  
+  const container = document.getElementById('db-essay-form');  
+  const set = document.createElement('div');  
+  set.className = 'db-essay-set';  
+  set.innerHTML = `  
+    <input type="text" class="db-essay-qno" value="${qNo}" placeholder="Q No" />  
+    <textarea class="db-essay-text" placeholder="Answer text">${answer}</textarea>  
+    <input type="file" class="db-essay-file" accept="image/png, image/jpeg" />  
+    <div class="db-essay-preview"><img style="width:200px;height:200px;display:none;" /></div>  
+    <button type="button" class="db-essay-add">Add Next Question</button>  
+    <button type="button" class="db-essay-remove">Delete Question</button>  
+  `;  
+  container.appendChild(set);  
+  
+  const ta = set.querySelector('.db-essay-text');  
+  const fileInput = set.querySelector('.db-essay-file');  
+  const img = set.querySelector('img');  
+  
+  ta.addEventListener('input', () => {  
+    fileInput.style.display = ta.value.trim() ? 'none' : '';  
+    img.style.display = ta.value.trim() ? 'none' : img.style.display;  
+  });  
+  fileInput.addEventListener('change', async () => {  
+  const file = fileInput.files[0];  
+  if (!file) return;  
+  
+  // 1. Reject anything over 5 MB outright  
+  if (file.size > 5 * 1024 * 1024) {  
+    alert('Image too large! Please pick one under 5 MB.');  
+    fileInput.value = '';  
+    return;  
+  }  
+  
+  try {  
+    // 2. Compress it down to ?500 KB  
+    const compressed = await compressToMaxSize(file, 800, 800, 500);  
+    // 3. Show & stash the tiny version  
+    img.src = compressed;  
+    img.style.display = '';  
+    ta.style.display = 'none';  
+    fileInput.dataset.dataurl = compressed;  
+  } catch (err) {  
+    alert('Image processing error: ' + err.message);  
+    fileInput.value = '';  // clear for retry  
+  }  
+});  
+    
+  
+  set.querySelector('.db-essay-add').addEventListener('click', () => addDBEssaySet());  
+  set.querySelector('.db-essay-remove').addEventListener('click', () => set.remove());  
+}  
+  
+function setupLevelRadios() {  
+  const levels = {  
+    primary: ['PRY1','PRY2','PRY3','PRY4','PRY5','PRY6'],  
+    secondary: ['JS1','JS2','JS3','SS1','SS2','SS3'],  
+    tertiary: ['100L','200L','300L','400L','500L','MSc Level','PhD Level']  
+  };  
+  const radios = document.querySelectorAll('input[name="level"]');  
+  const classSelect = document.getElementById('db-student-class');  
+  const armInput = document.getElementById('db-student-arm');  
+  armInput.placeholder =  
+    'Enter Arm e.g Science, Business, Humanity, Microbiology';  
+  
+  radios.forEach(r =>  
+    r.addEventListener('change', () => {  
+      classSelect.innerHTML = '<option value="">Select Class</option>';  
+      levels[r.value].forEach(opt => {  
+        const o = document.createElement('option');  
+        o.value = opt;  
+        o.textContent = opt;  
+        classSelect.appendChild(o);  
+      });  
+      localStorage.setItem('selectedLevel', r.value);  
+    })  
+  );  
+  
+// restore on load (moved from init)  
+const savedLevel = localStorage.getItem('selectedLevel');  
+if (savedLevel) {  
+  const radio = document.querySelector(`input[name="level"][value="${savedLevel}"]`);  
+  if (radio) radio.checked = true;  
+}  
+  
+  // restore  
+  const saved = localStorage.getItem('selectedLevel');  
+  if (saved && levels[saved]) {  
+    document.querySelector(`input[name="level"][value="${saved}"]`).checked = true;  
+    levels[saved].forEach(opt => {  
+      const o = document.createElement('option');  
+      o.value = opt;  
+      o.textContent = opt;  
+      classSelect.appendChild(o);  
+    });  
+    const sel = localStorage.getItem('db-student-class');  
+    if (sel) classSelect.value = sel;  
+  }  
+  classSelect.addEventListener('change', () => {  
+    localStorage.setItem('db-student-class', classSelect.value);  
+  });  
+  armInput.addEventListener('input', () => {  
+    localStorage.setItem('db-student-arm', armInput.value);  
+  });  
+  const savedArm = localStorage.getItem('db-student-arm');  
+  if (savedArm) armInput.value = savedArm;  
+}  
+  
+function bindStudentButtons() {  
+  const saveBtn = document.getElementById('save-student-btn');  
+  saveBtn.textContent = 'Add Student';  
+  const updateBtn = document.getElementById('update-student-btn') || (() => {  
+    const btn = document.createElement('button');  
+    btn.id = 'update-student-btn';  
+    btn.type = 'button';  
+    btn.textContent = 'Update Student';  
+    btn.style.display = 'none';  
+    saveBtn.insertAdjacentElement('afterend', btn);  
+    return btn;  
+  })();  
+  
+  saveBtn.addEventListener('click', saveStudentData);  
+  updateBtn.addEventListener('click', updateStudentData);  
+}  
+
