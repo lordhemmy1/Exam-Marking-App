@@ -1,163 +1,241 @@
-<!DOCTYPE html>  
-<html lang="en">  
-<head>  
-  <meta charset="UTF-8" />  
-  <title>Examination Marking App</title>  
-  <link rel="stylesheet" href="styles.css" />  
-  <!-- jsPDF for PDF export -->  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  
-  <link  
-    rel="stylesheet"  
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"  
-    integrity="sha512-pb5j0HPMmCleQ5e17qOz+/BYY0krV3gc+VmJADj3/lKPAyXMql1rCpHLoildVandi1o1f6F93dMk4Yld2+uigA=="  
-    crossorigin="anonymous"  
-    referrerpolicy="no-referrer"  
-  />  
-</head>  
-<body>  
-  <header>Examination Marking App</header>  
-  <nav>  
-    <button class="tab-button active" data-tab="answer">Teacher's Answer Tab</button>  
-    <button class="tab-button" data-tab="db">Students Database</button>  
-    <button class="tab-button" data-tab="mark">Marking Tab</button>  
-    <button class="tab-button" data-tab="score">Score Tab</button>  
-  </nav>  
-  
-  <!-- Teacher's Answer Tab -->  
-  <section id="answer" class="tab-content active">  
-    <h3>Objective Answer Form</h3>  
-    <div id="objective-answer-container">  
-      <form id="objective-answer-form"></form>  
-      <div id="objective-key-total" style="display:none; font-weight:bold; margin-top:0.5rem;"></div>  
-      <div class="upload-note">  
-        Expected file upload format: Column A – Question No.; Column B – Correct Answer.  
-      </div>  
-      <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />  
-    </div>  
-  
-    <h3>Essay Answer Form</h3>  
-    <div id="essay-answer-container">  
-      <form id="essay-answer-form"></form>  
-      <div id="essay-key-total" style="display:none; font-weight:bold; margin-top:0.5rem;"></div>  
-      <div class="upload-note">  
-        Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.  
-      </div>  
-      <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />  
-    </div>  
-  
-    <button type="button" id="save-answers-btn">Save Answers</button>  
-  </section>  
-  
-  <!-- Students Database Tab -->  
-  <section id="db" class="tab-content">  
-    <h3>Students Database</h3>  
-    <form id="db-student-form">  
-      <div>  
-        <label>Name:</label>  
-        <input type="text" id="db-student-name" />  
-      </div>  
-  
-      <div>  
-        <label>Level:</label>  
-        <label><input type="radio" name="level" value="primary" /> Primary</label>  
-        <label><input type="radio" name="level" value="secondary" /> Secondary</label>  
-        <label><input type="radio" name="level" value="tertiary" /> Tertiary</label>  
-      </div>  
-  
-      <div>  
-        <label>Class:</label>  
-        <select id="db-student-class">  
-          <option value="">Select Class</option>  
-        </select>  
-      </div>  
-  
-      <div>  
-        <label>Arm:</label>  
-        <input type="text" id="db-student-arm" placeholder="Enter Arm e.g Science, Business…" />  
-      </div>  
-  
-      <fieldset>  
-        <legend>Objective Answers (comma-separated)</legend>  
-        <textarea id="db-objective-answer" placeholder="E.g. A,B,C,..."></textarea>  
-      </fieldset>  
-  
-      <fieldset>  
-        <legend>Essay Answers</legend>  
-        <div id="db-essay-form"></div>  
-      </fieldset>  
-  
-      <button type="button" id="save-student-btn">Add Student</button>  
-      <button type="button" id="update-student-btn" style="display:none;">Update Student</button>  
-    </form>  
-  
-    <h4>Student Information</h4>  
-    <div id="student-db-reference"></div>  
-    <br><br>  
-    <!-- ← INSERT THIS: bulk‐upload input -->  
-    <div style="margin-top:1rem;">  
-      <label for="upload-students">Import students (XLSX/CSV):</label>  
-      <input type="file" id="upload-students" accept=".xlsx,.csv" />  
-    </div>  
-    <br><br>  
-    <button type="button" id="clear-students-btn">Clear Database</button>  
-  </section>  
-  
-  <!-- Marking Tab -->  
-  <section id="mark" class="tab-content">  
-    <h3>Student Information</h3>  
-    <div id="student-search-container">  
-      <label for="search-student-input">Search Student</label>  
-      <input type="text" id="search-student-input" placeholder="Enter student name" />  
-      <button type="button" id="search-student-btn">Search</button>  
-      <button type="button" id="mark-next-btn">Mark Next Student</button>  
-    </div>  
-  
-    <form id="student-info-form">  
-      <div><label>Name:</label><input type="text" id="mark-student-name" readonly /></div>  
-      <div><label>Class:</label><input type="text" id="mark-student-class" readonly /></div>  
-      <div><label>Arm:</label><input type="text" id="mark-student-arm" readonly /></div>  
-    </form>  
-  
-    <h3>Student Objective Answers</h3>  
-    <button type="button" id="populate-objective-btn">Populate Objective Answers</button>  
-    <form id="objective-marking-form"></form>  
-    <button type="button" id="mark-objective-btn">Mark Objective</button>  
-    <div id="objective-marking-details"></div>  
-  
-    <h3>Student Essay Answers</h3>  
-    <div id="essay-marking-container"></div>  
-    <button type="button" id="sum-essay-btn">Sum Essay Marks</button>  
-    <div id="essay-scoring-details"></div>  
-    <br><br>  
-  
-    <button type="button" id="record-mark-btn">Record Mark</button>  
-    <div id="marking-notification"></div>  
-  </section>  
-  
-  <!-- Score Tab -->  
-  <section id="score" class="tab-content">  
-    <h3>Scores</h3>  
-    <table id="score-table">  
-      <thead>  
-        <tr>  
-          <th>Name</th>  
-          <th>Class</th>  
-          <th>Arm</th>  
-          <th>Objective</th>  
-          <th>Essay</th>  
-          <th>Total</th>  
-        </tr>  
-      </thead>  
-      <tbody></tbody>  
-    </table>  
-    <div class = "score-controls">  
-      <button type="button" id="clear-scores-btn">Reset Scores</button>  
-      <button type="button" id="download-score-btn">Download Scores</button>  
-      <button onclick="resetAllData()" id="reset-all-btn">Reset All</button>  
-    </div>  
-  </section>  
-  
-  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>  
-  <script src="script.js"></script>  
-</body>  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Examination Marking App</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    integrity="sha512-pb5j0HPMmCleQ5e17qOz+/BYY0krV3gc+VmJADj3/lKPAyXMql1rCpHLoildVandi1o1f6F93dMk4Yld2+uigA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #1a73e8;
+      color: white;
+      padding: 1rem;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      background: #fefefe;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .tab-button {
+      padding: 0.8rem 1.2rem;
+      border: none;
+      cursor: pointer;
+      background: none;
+      font-weight: bold;
+    }
+    .tab-button.active {
+      background: #1a73e8;
+      color: white;
+      border-bottom: 2px solid #0c55d4;
+    }
+    .tab-content {
+      display: none;
+      padding: 2rem;
+    }
+    .tab-content.active {
+      display: block;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin: 2rem auto;
+      max-width: 900px;
+    }
+    input, select, textarea, button {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    h3 {
+      margin-top: 1rem;
+      border-left: 4px solid #1a73e8;
+      padding-left: 0.5rem;
+    }
+    fieldset {
+      border: 1px solid #ddd;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .upload-note {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.5rem;
+    }
+    #objective-answer-container, #essay-answer-container {
+      margin-bottom: 1.5rem;
+    }
+    .score-controls {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+    #toggle-objective-btn, #toggle-essay-btn {
+      margin-top: 1rem;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>Examination Marking App</header>
+  <nav>
+    <button class="tab-button active" data-tab="answer">Teacher's Answer Tab</button>
+    <button class="tab-button" data-tab="db">Students Database</button>
+    <button class="tab-button" data-tab="mark">Marking Tab</button>
+    <button class="tab-button" data-tab="score">Score Tab</button>
+  </nav>
+
+  <!-- Teacher's Answer Tab -->
+  <section id="answer" class="tab-content active">
+    <h3>Objective Answer Form</h3>
+    <button id="toggle-objective-btn">No Objective</button>
+    <div id="objective-answer-container">
+      <form id="objective-answer-form"></form>
+      <div id="objective-key-total" style="display:none; font-weight:bold; margin-top:0.5rem;"></div>
+      <div class="upload-note">
+        Expected file upload format: Column A – Question No.; Column B – Correct Answer.
+      </div>
+      <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />
+    </div>
+
+    <h3>Essay Answer Form</h3>
+    <button id="toggle-essay-btn">No Essay</button>
+    <div id="essay-answer-container">
+      <form id="essay-answer-form"></form>
+      <div id="essay-key-total" style="display:none; font-weight:bold; margin-top:0.5rem;"></div>
+      <div class="upload-note">
+        Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.
+      </div>
+      <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />
+    </div>
+
+    <button type="button" id="save-answers-btn">Save Answers</button>
+  </section>
+
+  <!-- Students Database Tab -->
+  <section id="db" class="tab-content">
+    <h3>Students Database</h3>
+    <form id="db-student-form">
+      <div><label>Name:</label><input type="text" id="db-student-name" /></div>
+      <div>
+        <label>Level:</label>
+        <label><input type="radio" name="level" value="primary" /> Primary</label>
+        <label><input type="radio" name="level" value="secondary" /> Secondary</label>
+        <label><input type="radio" name="level" value="tertiary" /> Tertiary</label>
+      </div>
+      <div>
+        <label>Class:</label>
+        <select id="db-student-class">
+          <option value="">Select Class</option>
+        </select>
+      </div>
+      <div><label>Arm:</label><input type="text" id="db-student-arm" placeholder="Enter Arm e.g Science, Business…" /></div>
+      <fieldset>
+        <legend>Objective Answers (comma-separated)</legend>
+        <textarea id="db-objective-answer" placeholder="E.g. A,B,C,..."></textarea>
+      </fieldset>
+      <fieldset>
+        <legend>Essay Answers</legend>
+        <div id="db-essay-form"></div>
+      </fieldset>
+      <button type="button" id="save-student-btn">Add Student</button>
+      <button type="button" id="update-student-btn" style="display:none;">Update Student</button>
+    </form>
+    <h4>Student Information</h4>
+    <div id="student-db-reference"></div>
+    <div style="margin-top:1rem;">
+      <label for="upload-students">Import students (XLSX/CSV):</label>
+      <input type="file" id="upload-students" accept=".xlsx,.csv" />
+    </div>
+    <button type="button" id="clear-students-btn">Clear Database</button>
+  </section>
+
+  <!-- Marking Tab -->
+  <section id="mark" class="tab-content">
+    <h3>Student Information</h3>
+    <div id="student-search-container">
+      <label for="search-student-input">Search Student</label>
+      <input type="text" id="search-student-input" placeholder="Enter student name" />
+      <button type="button" id="search-student-btn">Search</button>
+      <button type="button" id="mark-next-btn">Mark Next Student</button>
+    </div>
+    <form id="student-info-form">
+      <div><label>Name:</label><input type="text" id="mark-student-name" readonly /></div>
+      <div><label>Class:</label><input type="text" id="mark-student-class" readonly /></div>
+      <div><label>Arm:</label><input type="text" id="mark-student-arm" readonly /></div>
+    </form>
+    <h3>Student Objective Answers</h3>
+    <button type="button" id="populate-objective-btn">Populate Objective Answers</button>
+    <form id="objective-marking-form"></form>
+    <button type="button" id="mark-objective-btn">Mark Objective</button>
+    <div id="objective-marking-details"></div>
+    <h3>Student Essay Answers</h3>
+    <div id="essay-marking-container"></div>
+    <button type="button" id="sum-essay-btn">Sum Essay Marks</button>
+    <div id="essay-scoring-details"></div>
+    <button type="button" id="record-mark-btn">Record Mark</button>
+    <div id="marking-notification"></div>
+  </section>
+
+  <!-- Score Tab -->
+  <section id="score" class="tab-content">
+    <h3>Scores</h3>
+    <table id="score-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Class</th>
+          <th>Arm</th>
+          <th>Objective</th>
+          <th>Essay</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="score-controls">
+      <button type="button" id="clear-scores-btn">Reset Scores</button>
+      <button type="button" id="download-score-btn">Download Scores</button>
+      <button onclick="resetAllData()" id="reset-all-btn">Reset All</button>
+    </div>
+  </section>
+
+  <script>
+    document.getElementById('toggle-objective-btn').addEventListener('click', () => {
+      const container = document.getElementById('objective-answer-container');
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('toggle-essay-btn').addEventListener('click', () => {
+      const container = document.getElementById('essay-answer-container');
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    });
+  </script>
+
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>
