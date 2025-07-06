@@ -1,3 +1,119 @@
+// --- Data Manager (uses localStorage) ---  
+const MAX_STUDENTS = 1000;  
+  
+// ---- image compression helper ----  
+async function compressToMaxSize(file, maxWidth = 800, maxHeight = 800, maxKB = 500) {  
+  if (!(file instanceof File)) {  
+    throw new Error('Provided input is not a File.');  
+  }  
+  
+  const readFileAsDataURL = (file) => new Promise((resolve, reject) => {  
+    const reader = new FileReader();  
+    reader.onerror = () => reject(new Error('Failed to read file.'));  
+    reader.onload = () => resolve(reader.result);  
+    reader.readAsDataURL(file);  
+  });  
+  
+  const loadImage = (src) => new Promise((resolve, reject) => {  
+    const img = new Image();  
+    img.onload = () => resolve(img);  
+    img.onerror = () => reject(new Error('Invalid image file.'));  
+    img.src = src;  
+  });  
+  
+  const dataUrl = await readFileAsDataURL(file);  
+  const img = await loadImage(dataUrl);  
+  
+  const canvas = document.createElement('canvas');  
+  let w = img.width;  
+  let h = img.height;  
+  
+  if (w > h && w > maxWidth) {  
+    h *= maxWidth / w;  
+    w = maxWidth;  
+  } else if (h > w && h > maxHeight) {  
+    w *= maxHeight / h;  
+    h = maxHeight;  
+  }  
+  
+  canvas.width = w;  
+  canvas.height = h;  
+  const ctx = canvas.getContext('2d');  
+  ctx.drawImage(img, 0, 0, w, h);  
+  
+  let quality = 0.9;  
+  let output = canvas.toDataURL('image/jpeg', quality);  
+  let sizeKB = (output.length * 3 / 4) / 1024;  
+  
+  while (sizeKB > maxKB && quality > 0.1) {  
+    quality -= 0.1;  
+    output = canvas.toDataURL('image/jpeg', quality);  
+    sizeKB = (output.length * 3 / 4) / 1024;  
+  }  
+  
+  if (sizeKB > maxKB) {  
+    throw new Error('Unable to compress image below ' + maxKB + 'KB.');  
+  }  
+  
+  return output;  
+}  
+  
+const DataManager = {  
+  answerKey: { objective: [], essay: [] },  
+  students: [],  
+  scores: [],  
+  
+  init() {  
+    // load persisted data  
+    const ak = localStorage.getItem('answerKey');  
+    const sd = localStorage.getItem('studentsDB');  
+    const sc = localStorage.getItem('scoresDB');  
+    if (ak) this.answerKey = JSON.parse(ak);  
+    if (sd) this.students = JSON.parse(sd);  
+    if (sc) this.scores = JSON.parse(sc);  
+  
+    // initialize UI  
+    renameAnswerTab();  
+    insertAnswerTabDescription();  
+    renderObjectiveKeyForm();  
+    renderEssayKeyForm();  
+    bindAnswerSaveButton();  
+    bindUploadHandlers();  
+    initDBEssaySection();  
+    setupLevelRadios();  
+    bindStudentButtons();  
+    bindClearStudentsButton();  
+    bindStudentUploadHandler();  
+    updateStudentAnswerInfo();  
+    updateScoreTable();  
+    bindClearScoreButton();  
+    bindMarkingTab();  
+    bindDownloadButton();  
+  },  
+  
+  saveAnswerKey() {  
+    localStorage.setItem('answerKey', JSON.stringify(this.answerKey));  
+  },  
+  
+  saveStudents() {  
+    // sort alphabetically  
+    this.students.sort((a, b) => a.name.localeCompare(b.name));  
+    localStorage.setItem('studentsDB', JSON.stringify(this.students));  
+  },  
+  
+  saveScores() {  
+    localStorage.setItem('scoresDB', JSON.stringify(this.scores));  
+  },  
+  
+  clearAll() {  
+    localStorage.clear();  
+    this.answerKey = { objective: [], essay: [] };  
+    this.students = [];  
+    this.scores = [];  
+    location.reload();  
+  }  
+};  
+
 // Toggle Objective & Essay Sections in Both Tabs
 function toggleSection(sectionId) {
   const section = document.getElementById(sectionId);
