@@ -136,49 +136,211 @@ function validateTeacherAnswers() {
   return true;
 }
 
-// Attach validation to save button
-const saveAnswersBtn = document.getElementById('save-answers-btn');
-if (saveAnswersBtn) {
-  saveAnswersBtn.addEventListener('click', (e) => {
-    if (!validateTeacherAnswers()) {
-      e.preventDefault();
+// --- Teacher's Answer Tab ---  
+function renameAnswerTab() {  
+  const btn = document.querySelector('.tab-button[data-tab="answer"]');  
+  if (btn) btn.textContent = "Teacher's Answer Tab";  
+}  
+function insertAnswerTabDescription() {  
+  const section = document.getElementById('answer');  
+  const desc = document.createElement('p');  
+  desc.textContent =  
+    'Upload or manually type your objective answers into the objective form section and the essay section.';  
+  desc.style.fontSize = '1rem';  
+  section.insertBefore(desc, document.getElementById('objective-answer-container'));  
+}  
+  
+// --- Teacher's Answer Tab: updated renderObjectiveKeyForm ---  
+function renderObjectiveKeyForm() {  
+  const c = document.getElementById('objective-answer-form');  
+  c.innerHTML = '';  
+  c.classList.add('two-col-form');  
+  
+  // get only populated entries (non?empty answers)  
+  const entries = DataManager.answerKey.objective;  
+  const populated = entries.filter(o => o.answer.trim() !== '');  
+  // if none, still show 50 blanks  
+  const toShow = populated.length  
+    ? entries  
+    : Array.from({ length: 50 }, (_, i) => ({ questionNo: i + 1, answer: '' }));  
+  
+  toShow.forEach(o => {  
+    const div = document.createElement('div');  
+    div.innerHTML = `<label>Q${o.questionNo}:</label>  
+                     <input type="text" name="q_${o.questionNo}"  
+                            value="${o.answer}" />`;  
+    c.appendChild(div);  
+  });  
+  
+  // update and show total count  
+  const totalEl = document.getElementById('objective-key-total');  
+  const count = populated.length;  
+  if (count > 0) {  
+    totalEl.textContent = `Total Objective Marks: ${count}`;  
+    totalEl.style.display = '';  
+  } else {  
+    totalEl.style.display = 'none';  
+  }  
+}  
+  
+// --- Teacher's Answer Tab: updated renderEssayKeyForm ---  
+function renderEssayKeyForm() {  
+  const c = document.getElementById('essay-answer-form');  
+  c.innerHTML = '';  
+  
+  const entries = DataManager.answerKey.essay;  
+  const populated = entries.filter(e => e.questionNo && e.mark !== '');  
+  const toShow = populated.length  
+    ? entries  
+    : Array.from({ length: 20 }, (_, i) => ({ questionNo: '', mark: '', answer: '' }));  
+  
+  toShow.forEach((e, i) => {  
+    const div = document.createElement('div');  
+    div.innerHTML = `  
+      <label>Set ${e.questionNo || i + 1}:</label>  
+      <input type="text"   name="qno_${i + 1}"  placeholder="Question No." value="${e.questionNo}" />  
+      <input type="number" name="mark_${i + 1}" placeholder="Mark allotted"  value="${e.mark}" />  
+      <textarea name="ans_${i + 1}" placeholder="Correct answer">${e.answer}</textarea>  
+    `;  
+    c.appendChild(div);  
+  });  
+  
+  // sum up all the marks  
+  const totalEl = document.getElementById('essay-key-total');  
+  const sum = populated.reduce((s, e) => s + Number(e.mark), 0);  
+  if (populated.length) {  
+    totalEl.textContent = `Total Essay Marks: ${sum}`;  
+    totalEl.style.display = '';  
+  } else {  
+    totalEl.style.display = 'none';  
+  }  
+}  
+  
+// --- Bind Answer Save & Upload ---  
+function bindAnswerSaveButton() {  
+  const btn = document.getElementById('save-answers-btn');  
+  btn.textContent = 'Save Answers';  
+  btn.addEventListener('click', saveAnswerData);  
+}  
+function bindUploadHandlers() {  
+  document  
+    .getElementById('upload-objective-answer')  
+    ?.addEventListener('change', handleObjectiveUpload);  
+  document  
+    .getElementById('upload-essay-answer')  
+    ?.addEventListener('change', handleEssayUpload);  
+}  
+
+// --- File Upload Parsers ---  
+function handleObjectiveUpload(e) {  
+  const file = e.target.files[0];  
+  if (!file) return;  
+  const reader = new FileReader();  
+  reader.onload = evt => {  
+    const data = evt.target.result;  
+    const wb = XLSX.read(data, { type: 'array' });  
+    const ws = wb.Sheets[wb.SheetNames[0]];  
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });  
+    if (rows.length <= 1) return;  
+    DataManager.answerKey.objective = rows.slice(1).map(r => ({  
+      questionNo: Number(r[0]) || undefined,  
+      answer: String(r[1] || '').trim()  
+    }));  
+    DataManager.saveAnswerKey();  
+    renderObjectiveKeyForm();  
+  };  
+  reader.readAsArrayBuffer(file);  
+}  
+function handleEssayUpload(e) {  
+  const file = e.target.files[0];  
+  if (!file) return;  
+  const reader = new FileReader();  
+  reader.onload = evt => {  
+    const data = evt.target.result;  
+    const wb = XLSX.read(data, { type: 'array' });  
+    const ws = wb.Sheets[wb.SheetNames[0]];  
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });  
+    if (rows.length <= 1) return;  
+    DataManager.answerKey.essay = rows.slice(1, 21).map(r => ({  
+      questionNo: String(r[0] || '').trim(),  
+      mark: r[1] != null ? r[1] : '',  
+      answer: String(r[2] || '').trim()  
+    }));  
+    DataManager.saveAnswerKey();  
+    renderEssayKeyForm();  
+  };  
+  reader.readAsArrayBuffer(file);  
+} 
+
+// --- Save Answer Data ---
+function saveAnswerData() {
+  const objectiveContainer = document.getElementById('objective-answer-container');
+  const essayContainer = document.getElementById('essay-answer-container');
+  const objectiveVisible = objectiveContainer && objectiveContainer.style.display !== 'none';
+  const essayVisible = essayContainer && essayContainer.style.display !== 'none';
+
+  let validObjective = false;
+  let validEssay = false;
+
+  if (objectiveVisible) {
+    const objInputs = Array.from(document.querySelectorAll('#objective-answer-form input'));
+    validObjective = objInputs.some(i => i.value.trim());
+    if (!validObjective) {
+      alert('Please fill at least one objective answer before saving.');
       return;
     }
-    // Proceed with existing save logic...
-  });
-}
-
-// Link "No Objective" and "No Essay" buttons to both tabs
-const toggleObjectiveBtn = document.getElementById('toggle-objective-btn');
-const toggleEssayBtn = document.getElementById('toggle-essay-btn');
-
-if (toggleObjectiveBtn) {
-  toggleObjectiveBtn.addEventListener('click', () => {
-    toggleSection('objective-answer-container');
-    toggleSection('objective-marking-form');
-  });
-}
-
-if (toggleEssayBtn) {
-  toggleEssayBtn.addEventListener('click', () => {
-    toggleSection('essay-answer-container');
-    toggleSection('essay-marking-container');
-  });
-}
-
-// Auto-retrieve student essay image from database during marking
-function populateEssayImages(studentName) {
-  const students = JSON.parse(localStorage.getItem('students') || '[]');
-  const student = students.find(s => s.name.toLowerCase() === studentName.toLowerCase());
-  if (student && student.essayImages) {
-    const container = document.getElementById('essay-marking-container');
-    container.innerHTML = '';
-    student.essayImages.forEach(imgUrl => {
-      const img = document.createElement('img');
-      img.src = imgUrl;
-      img.style.maxWidth = '100%';
-      img.style.marginBottom = '1rem';
-      container.appendChild(img);
-    });
+    DataManager.answerKey.objective = objInputs.map((i, idx) => ({
+      questionNo: idx + 1,
+      answer: i.value.trim()
+    }));
+  } else {
+    DataManager.answerKey.objective = [];
   }
-}
+
+  if (essayVisible) {
+    const essayDivs = Array.from(document.querySelectorAll('#essay-answer-form div'));
+    validEssay = essayDivs.some((div, idx) => {
+      const q = div.querySelector(`[name="qno_${idx + 1}"]`).value.trim();
+      const m = div.querySelector(`[name="mark_${idx + 1}"]`).value.trim();
+      const a = div.querySelector(`[name="ans_${idx + 1}"]`).value.trim();
+      return q && m && a;
+    });
+    if (!validEssay) {
+      alert('Please fill at least one essay question (Question No., Mark, and Answer).');
+      return;
+    }
+    DataManager.answerKey.essay = essayDivs.map((div, idx) => ({
+      questionNo: div.querySelector(`[name="qno_${idx + 1}"]`).value.trim(),
+      mark: div.querySelector(`[name="mark_${idx + 1}"]`).value.trim(),
+      answer: div.querySelector(`[name="ans_${idx + 1}"]`).value.trim()
+    }));
+  } else {
+    DataManager.answerKey.essay = [];
+  }
+
+  // Final validation: at least one must be filled if both are visible
+  if (objectiveVisible && essayVisible && !validObjective && !validEssay) {
+    alert('Please fill at least one objective or essay answer before saving.');
+    return;
+  }
+
+  DataManager.saveAnswerKey();
+
+  // Clear inputs
+  if (objectiveVisible) {
+    document.querySelectorAll('#objective-answer-form input').forEach(i => (i.value = ''));
+  }
+  if (essayVisible) {
+    document.querySelectorAll('#essay-answer-form input, #essay-answer-form textarea').forEach(el => (el.value = ''));
+  }
+
+  let notif = document.getElementById('answer-notification');
+  if (!notif) {
+    notif = document.createElement('div');
+    notif.id = 'answer-notification';
+    document.getElementById('save-answers-btn').insertAdjacentElement('afterend', notif);
+  }
+  notif.textContent = 'All answers saved successfully';
+  notif.style.color = 'green';
+    }
+                                  
