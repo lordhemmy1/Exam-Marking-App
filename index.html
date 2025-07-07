@@ -1,324 +1,163 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Examination Marking App</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-</head>
-<body>
-  <div class="app-container">
-    <header>
-      <div class="logo-container">
-        <i class="fas fa-graduation-cap"></i>
-        <h1>Examination Marking App</h1>
-      </div>
-      <div class="user-info">
-        <i class="fas fa-user-circle"></i>
-        <span>Teacher</span>
-      </div>
-    </header>
-
-    <nav>
-      <div class="tabs-container">
-        <button class="tab-button active" data-tab="answer">
-          <i class="fas fa-key"></i> Answer Key
-        </button>
-        <button class="tab-button" data-tab="db">
-          <i class="fas fa-database"></i> Student Database
-        </button>
-        <button class="tab-button" data-tab="mark">
-          <i class="fas fa-check-circle"></i> Marking
-        </button>
-        <button class="tab-button" data-tab="score">
-          <i class="fas fa-chart-bar"></i> Scores
-        </button>
-      </div>
-    </nav>
-
-    <main class="content-container">
-      <!-- Teacher's Answer Tab -->
-      <section id="answer" class="tab-content active">
-        <div class="section-header">
-          <h2><i class="fas fa-key"></i> Answer Key Setup</h2>
-          <p>Set up the correct answers for objective and essay questions</p>
-        </div>
-        
-        <div class="form-section">
-          <div class="form-header">
-            <h3><i class="fas fa-list-ol"></i> Objective Answer Form</h3>
-            <button id="toggle-objective-btn" class="toggle-btn">No Objective</button>
-          </div>
-          <div id="objective-answer-container" class="form-content">
-            <form id="objective-answer-form"></form>
-            <div id="objective-key-total" class="key-total">Total: 0 marks</div>
-            <div class="upload-section">
-              <label class="upload-label">
-                <i class="fas fa-file-upload"></i> Upload Objective Key
-                <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />
-              </label>
-              <div class="upload-note">
-                <i class="fas fa-info-circle"></i> Expected format: Column A – Question No.; Column B – Correct Answer
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <div class="form-header">
-            <h3><i class="fas fa-pen-fancy"></i> Essay Answer Form</h3>
-            <button id="toggle-essay-btn" class="toggle-btn">No Essay</button>
-          </div>
-          <div id="essay-answer-container" class="form-content">
-            <form id="essay-answer-form"></form>
-            <div id="essay-key-total" class="key-total">Total: 0 marks</div>
-            <div class="upload-section">
-              <label class="upload-label">
-                <i class="fas fa-file-upload"></i> Upload Essay Key
-                <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />
-              </label>
-              <div class="upload-note">
-                <i class="fas fa-info-circle"></i> Expected format: Column A – Question No.; Column B – Mark; Column C – Answer
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="action-buttons">
-          <button type="button" id="save-answers-btn" class="primary-btn">
-            <i class="fas fa-save"></i> Save Answer Keys
-          </button>
-        </div>
-      </section>
-
-      <!-- Students Database Tab -->
-      <section id="db" class="tab-content">
-        <div class="section-header">
-          <h2><i class="fas fa-database"></i> Student Database</h2>
-          <p>Manage student information and their examination answers</p>
-        </div>
-        
-        <div class="db-container">
-          <div class="student-form-container">
-            <h3><i class="fas fa-user-plus"></i> Add/Edit Student</h3>
-            <form id="db-student-form" class="student-form">
-              <div class="form-group">
-                <label>Name:</label>
-                <input type="text" id="db-student-name" placeholder="Enter student name" />
-              </div>
-              <div class="form-group">
-                <label>Level:</label>
-                <div class="radio-group">
-                  <label><input type="radio" name="level" value="primary" /> Primary</label>
-                  <label><input type="radio" name="level" value="secondary" /> Secondary</label>
-                  <label><input type="radio" name="level" value="tertiary" /> Tertiary</label>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Class:</label>
-                <select id="db-student-class">
-                  <option value="">Select Class</option>
-                  <option value="1">Class 1</option>
-                  <option value="2">Class 2</option>
-                  <option value="3">Class 3</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Arm:</label>
-                <input type="text" id="db-student-arm" placeholder="e.g. Science, Business" />
-              </div>
-              
-              <fieldset>
-                <legend><i class="fas fa-check-square"></i> Objective Answers</legend>
-                <textarea id="db-objective-answer" placeholder="Enter comma-separated answers (e.g. A,B,C,...)"></textarea>
-              </fieldset>
-              
-              <fieldset>
-                <legend><i class="fas fa-file-alt"></i> Essay Answers</legend>
-                <div id="db-essay-form"></div>
-              </fieldset>
-              
-              <div class="form-buttons">
-                <button type="button" id="save-student-btn" class="primary-btn">
-                  <i class="fas fa-plus"></i> Add Student
-                </button>
-                <button type="button" id="update-student-btn" class="secondary-btn">
-                  <i class="fas fa-sync-alt"></i> Update Student
-                </button>
-              </div>
-            </form>
-          </div>
-          
-          <div class="student-list-container">
-            <h3><i class="fas fa-users"></i> Student List</h3>
-            <div id="student-db-reference" class="student-list">
-              <div class="student-list-header">
-                <span>Name</span>
-                <span>Class</span>
-                <span>Arm</span>
-                <span>Actions</span>
-              </div>
-              <div class="student-list-content">
-                <p class="empty-message">No students added yet. Add students to see them listed here.</p>
-              </div>
-            </div>
-            
-            <div class="import-section">
-              <label class="upload-label">
-                <i class="fas fa-file-import"></i> Import Students
-                <input type="file" id="upload-students" accept=".xlsx,.csv" />
-              </label>
-              <button type="button" id="clear-students-btn" class="warning-btn">
-                <i class="fas fa-trash-alt"></i> Clear Database
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Marking Tab -->
-      <section id="mark" class="tab-content">
-        <div class="section-header">
-          <h2><i class="fas fa-check-circle"></i> Marking</h2>
-          <p>Evaluate student answers and record their scores</p>
-        </div>
-        
-        <div class="student-info-section">
-          <h3><i class="fas fa-user-graduate"></i> Student Information</h3>
-          <div id="student-search-container" class="search-container">
-            <div class="search-box">
-              <input type="text" id="search-student-input" placeholder="Enter student name" />
-              <button type="button" id="search-student-btn" class="search-btn">
-                <i class="fas fa-search"></i> Search
-              </button>
-            </div>
-            <button type="button" id="mark-next-btn" class="primary-btn">
-              <i class="fas fa-arrow-right"></i> Next Student
-            </button>
-          </div>
-          
-          <form id="student-info-form" class="info-card">
-            <div class="info-row">
-              <label>Name:</label>
-              <span id="mark-student-name">-</span>
-            </div>
-            <div class="info-row">
-              <label>Class:</label>
-              <span id="mark-student-class">-</span>
-            </div>
-            <div class="info-row">
-              <label>Arm:</label>
-              <span id="mark-student-arm">-</span>
-            </div>
-          </form>
-        </div>
-        
-        <div class="marking-section">
-          <div class="objective-marking">
-            <div class="section-header">
-              <h3><i class="fas fa-list-ol"></i> Objective Answers</h3>
-              <button type="button" id="populate-objective-btn" class="secondary-btn">
-                <i class="fas fa-magic"></i> Populate Answers
-              </button>
-            </div>
-            <form id="objective-marking-form" class="marking-form"></form>
-            <button type="button" id="mark-objective-btn" class="primary-btn">
-              <i class="fas fa-check-double"></i> Mark Objective
-            </button>
-            <div id="objective-marking-details" class="result-card">
-              <div class="result-header">
-                <i class="fas fa-clipboard-list"></i> Objective Results
-              </div>
-              <div class="result-content">
-                <p>No results yet. Mark objective answers to see results.</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="essay-marking">
-            <div class="section-header">
-              <h3><i class="fas fa-pen-fancy"></i> Essay Answers</h3>
-            </div>
-            <div id="essay-marking-container" class="marking-form"></div>
-            <button type="button" id="sum-essay-btn" class="primary-btn">
-              <i class="fas fa-calculator"></i> Sum Essay Marks
-            </button>
-            <div id="essay-scoring-details" class="result-card">
-              <div class="result-header">
-                <i class="fas fa-file-alt"></i> Essay Results
-              </div>
-              <div class="result-content">
-                <p>No results yet. Sum essay marks to see results.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="action-section">
-          <button type="button" id="record-mark-btn" class="primary-btn large-btn">
-            <i class="fas fa-save"></i> Record Student Marks
-          </button>
-          <div id="marking-notification" class="notification">
-            <i class="fas fa-info-circle"></i> Ready to mark student answers
-          </div>
-        </div>
-      </section>
-
-      <!-- Score Tab -->
-      <section id="score" class="tab-content">
-        <div class="section-header">
-          <h2><i class="fas fa-chart-bar"></i> Examination Scores</h2>
-          <p>View and manage student examination results</p>
-        </div>
-        
-        <div class="scores-table-container">
-          <table id="score-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Class</th>
-                <th>Arm</th>
-                <th>Objective</th>
-                <th>Essay</th>
-                <th>Total</th>
-                <th>Grade</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="7" class="empty-table">No scores recorded yet. Start marking to see results here.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div class="score-controls">
-          <button type="button" id="clear-scores-btn" class="warning-btn">
-            <i class="fas fa-trash-alt"></i> Reset Scores
-          </button>
-          <button type="button" id="download-score-btn" class="primary-btn">
-            <i class="fas fa-download"></i> Download Scores
-          </button>
-          <button type="button" id="reset-all-btn" class="danger-btn">
-            <i class="fas fa-redo"></i> Reset All Data
-          </button>
-        </div>
-      </section>
-    </main>
-
-    <footer>
-      <p>Examination Marking App &copy; 2023 | Created with <i class="fas fa-heart"></i> for Educators</p>
-      <div class="footer-links">
-        <a href="#"><i class="fas fa-question-circle"></i> Help</a>
-        <a href="#"><i class="fas fa-cog"></i> Settings</a>
-        <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      </div>
-    </footer>
-  </div>
-
-  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-  <script src="script.js"></script>
-</body>
-  </html>
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+  <meta charset="UTF-8" />  
+  <title>Examination Marking App</title>  
+  <link rel="stylesheet" href="styles.css" />  
+  <!-- jsPDF for PDF export -->  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  
+  <link  
+    rel="stylesheet"  
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"  
+    integrity="sha512-pb5j0HPMmCleQ5e17qOz+/BYY0krV3gc+VmJADj3/lKPAyXMql1rCpHLoildVandi1o1f6F93dMk4Yld2+uigA=="  
+    crossorigin="anonymous"  
+    referrerpolicy="no-referrer"  
+  />  
+</head>  
+<body>  
+  <header>Examination Marking App</header>  
+  <nav>  
+    <button class="tab-button active" data-tab="answer">Key 🗝️ </button>  
+    <button class="tab-button" data-tab="db">Students Database</button>  
+    <button class="tab-button" data-tab="mark">Marking Tab</button>  
+    <button class="tab-button" data-tab="score">Score Tab</button>  
+  </nav>  
+  
+  <!-- Teacher's Answer Tab -->  
+  <section id="answer" class="tab-content active">  
+    <h3>Objective Answer Form</h3>  
+    <div id="objective-answer-container">  
+      <form id="objective-answer-form"></form>  
+      <div id="objective-key-total" style="display:none; font-weight:bold; margin-top:0.5rem;"></div>  
+      <div class="upload-note">  
+        Expected file upload format: Column A – Question No.; Column B – Correct Answer.  
+      </div>  
+      <input type="file" id="upload-objective-answer" accept=".xlsx,.csv" />  
+    </div>  
+  
+    <h3>Essay Answer Form</h3>  
+    <div id="essay-answer-container">  
+      <form id="essay-answer-form"></form>  
+      <div id="essay-key-total" style="display:none; font-weight:bold; margin-top:0.5rem;"></div>  
+      <div class="upload-note">  
+        Expected file upload format: Column A – Question No.; Column B – Mark; Column C – Answer.  
+      </div>  
+      <input type="file" id="upload-essay-answer" accept=".xlsx,.csv" />  
+    </div>  
+  
+    <button type="button" id="save-answers-btn">Save Answers</button>  
+  </section>  
+  
+  <!-- Students Database Tab -->  
+  <section id="db" class="tab-content">  
+    <h3>Students Database</h3>  
+    <form id="db-student-form">  
+      <div>  
+        <label>Name:</label>  
+        <input type="text" id="db-student-name" />  
+      </div>  
+  
+      <div>  
+        <label>Level:</label>  
+        <label><input type="radio" name="level" value="primary" /> Primary</label>  
+        <label><input type="radio" name="level" value="secondary" /> Secondary</label>  
+        <label><input type="radio" name="level" value="tertiary" /> Tertiary</label>  
+      </div>  
+  
+      <div>  
+        <label>Class:</label>  
+        <select id="db-student-class">  
+          <option value="">Select Class</option>  
+        </select>  
+      </div>  
+  
+      <div>  
+        <label>Arm:</label>  
+        <input type="text" id="db-student-arm" placeholder="Enter Arm e.g Science, Business…" />  
+      </div>  
+  
+      <fieldset>  
+        <legend>Objective Answers (comma-separated)</legend>  
+        <textarea id="db-objective-answer" placeholder="E.g. A,B,C,..."></textarea>  
+      </fieldset>  
+  
+      <fieldset>  
+        <legend>Essay Answers</legend>  
+        <div id="db-essay-form"></div>  
+      </fieldset>  
+  
+      <button type="button" id="save-student-btn">Add Student</button>  
+      <button type="button" id="update-student-btn" style="display:none;">Update Student</button>  
+    </form>  
+  
+    <h4>Student Information</h4>  
+    <div id="student-db-reference"></div>  
+    <br><br>  
+    <!-- ← INSERT THIS: bulk‐upload input -->  
+    <div style="margin-top:1rem;">  
+      <label for="upload-students">Import students (XLSX/CSV):</label>  
+      <input type="file" id="upload-students" accept=".xlsx,.csv" />  
+    </div>  
+    <br><br>  
+    <button type="button" id="clear-students-btn">Clear Database</button>  
+  </section>  
+  
+  <!-- Marking Tab -->  
+  <section id="mark" class="tab-content">  
+    <h3>Student Information</h3>  
+    <div id="student-search-container">  
+      <label for="search-student-input">Search Student</label>  
+      <input type="text" id="search-student-input" placeholder="Enter student name" />  
+      <button type="button" id="search-student-btn">Search</button>  
+      <button type="button" id="mark-next-btn">Mark Next Student</button>  
+    </div>  
+  
+    <form id="student-info-form">  
+      <div><label>Name:</label><input type="text" id="mark-student-name" readonly /></div>  
+      <div><label>Class:</label><input type="text" id="mark-student-class" readonly /></div>  
+      <div><label>Arm:</label><input type="text" id="mark-student-arm" readonly /></div>  
+    </form>  
+  
+    <h3>Student Objective Answers</h3>  
+    <button type="button" id="populate-objective-btn">Populate Objective Answers</button>  
+    <form id="objective-marking-form"></form>  
+    <button type="button" id="mark-objective-btn">Mark Objective</button>  
+    <div id="objective-marking-details"></div>  
+  
+    <h3>Student Essay Answers</h3>  
+    <div id="essay-marking-container"></div>  
+    <button type="button" id="sum-essay-btn">Sum Essay Marks</button>  
+    <div id="essay-scoring-details"></div>  
+    <br><br>  
+  
+    <button type="button" id="record-mark-btn">Record Mark</button>  
+    <div id="marking-notification"></div>  
+  </section>  
+  
+  <!-- Score Tab -->  
+  <section id="score" class="tab-content">  
+    <h3>Scores</h3>  
+    <table id="score-table">  
+      <thead>  
+        <tr>  
+          <th>Name</th>  
+          <th>Class</th>  
+          <th>Arm</th>  
+          <th>Objective</th>  
+          <th>Essay</th>  
+          <th>Total</th>  
+        </tr>  
+      </thead>  
+      <tbody></tbody>  
+    </table>  
+    <div class = "score-controls">  
+      <button type="button" id="clear-scores-btn">Reset Scores</button>  
+      <button type="button" id="download-score-btn">Download Scores</button>  
+      <button onclick="resetAllData()" id="reset-all-btn">Reset All</button>  
+    </div>  
+  </section>  
+  
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>  
+  <script src="script.js"></script>  
+</body>  
+                    </html>
